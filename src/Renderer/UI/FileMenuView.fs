@@ -150,7 +150,7 @@ let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps mod
             //printfn "Check 1..."
     
             //Load components
-            Sheet (Sheet.Wire (BusWire.Symbol (Symbol.LoadComponents components )))
+            Sheet (Sheet.Wire (BusWire.Symbol (Symbol.LoadComponents components ))
             Sheet Sheet.UpdateBoundingBoxes
     
             Sheet (Sheet.Wire (BusWire.LoadConnections connections))
@@ -186,7 +186,10 @@ let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps mod
     //This will set a spinner for both Open project and Change sheet which are the two most lengthly processes
     dispatch <| (Sheet (Sheet.SetSpinner true))
     dispatch <| SendSeqMsgAsynch msgs
-    
+
+let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps model dispatch =
+    failwithf "Compile error"
+
 /// Return LoadedComponents with sheet name updated according to setFun.
 /// Do not update model. 
 let updateLoadedComponents name (setFun: LoadedComponent -> LoadedComponent) (lcLst: LoadedComponent list) (dispatch: (Msg -> Unit))=
