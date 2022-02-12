@@ -480,7 +480,7 @@ let rec private infer
         (Ok connectionsWidth, children)
         ||> List.fold (fun connectionsWidthRes child ->
             connectionsWidthRes
-            |> Result.bind (fun connectionsWidth ->
+            |> Result.map (fun connectionsWidth ->
                 infer staticMaps child connectionsWidth
             )
         )

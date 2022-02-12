@@ -4,7 +4,10 @@ CustomCompPort: 270
 EASY Error
 Runner:211
 
-MEDIUM Errror
+EASY Error:
+WidthInferror: 484
+
+MEDIUM Error
 TimeHelpers:5
 
 DIFFICULT Error
