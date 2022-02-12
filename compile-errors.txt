@@ -1,14 +1,14 @@
 EASY Error
-CustomCompPort: 270
+UI/CustomCompPort: 270
 
 EASY Error
-Runner:211
+Simulation/Runner:211
 
 EASY Error:
-WidthInferror: 484
+Common/WidthInferror: 484
 
 MEDIUM Error
-TimeHelpers:5
+Common/TimeHelpers:5
 
 DIFFICULT Error
-Filemenuview: 170
+UI/FileMenuView: 170
