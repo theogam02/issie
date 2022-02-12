@@ -1,3 +1,22 @@
+Compiler Errors
+---------------
+
+I have made small changes to working code to generate these compiler 
+errors (red in IDE). Things to remember:
+
+(1) The first error (line shown here) is always where you start, but the
+second error may be part of the same thing and more informative.
+
+(2) You don't need to know the code at all in order to fix these errors
+(in one case you need to make an informed guess)
+
+(3) One good strategy - if you find these errors hard - is to program
+in smaller chunks where you use locals to break up expressions and check
+the types of everything as you code. This is preventative and also helps you
+learn what the types of the code you use are.
+
+
+
 EASY Error
 UI/CustomCompPort: 270
 
