@@ -208,7 +208,7 @@ let checkPropagation (graph : SimulationGraph) : SimulationGraph =
         cGraph
         |> Map.filter (fun cid comp -> (match comp.Type with Output _ -> true | _ -> false) && comp.Label=label)
         |> Map.toList
-        |> (function | [comp] -> snd comp 
+        |> (function | comp -> snd comp 
                      | x -> failwithf "can't find output '%s' in graph: %d candidates: %A." (ll label) x.Length x)
     let propagateCombinationalComponents graph =
         (graph,graph)

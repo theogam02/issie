@@ -129,7 +129,7 @@ let checkPerformance m n startTimer stopTimer =
         let buff = arr |> arrayToHmap getFastHItem getFastSHA
         printfn $"hMap count = {hMapCount buff}"
         startTimer "UpdateHMap"
-        let buf = (buff, [|0..n-1|]) ||> Array.fold (fun buff i -> hMapAdd getFastHItem getFastSHA arr[i % m] buff)
+        let buf = (buff, [|0..n-1|] ||> Array.fold (fun buff i -> hMapAdd getFastHItem getFastSHA arr[i % m] buff)
         stopTimer "UpdateHMap" 
         
     let updateMapBuffer() = 

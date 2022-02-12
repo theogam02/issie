@@ -267,7 +267,7 @@ let getDependents (model:Model)  =
                  |> List.collect (
                      function 
                          | {Type = Custom { Name=name; InputLabels=ins; OutputLabels=outs}
-                            Id = cid} when name = sheetName-> [ldc.Name, cid,  (ins,outs)]
+                            Id = cid} when name = sheetName-> ldc.Name, cid,  (ins,outs)
                          | _ -> []))
          printfn "depcheck2c"
          Some(newSig, instances)
