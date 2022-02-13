@@ -187,8 +187,7 @@ let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps mod
     dispatch <| (Sheet (Sheet.SetSpinner true))
     dispatch <| SendSeqMsgAsynch msgs
 
-let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps model dispatch =
-    failwithf "Compile error"
+
 
 /// Return LoadedComponents with sheet name updated according to setFun.
 /// Do not update model. 
