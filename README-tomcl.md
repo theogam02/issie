@@ -2,19 +2,22 @@
 
 ## Instructions
 
-* This should be on branch `hlp22-indiv-assess-<login>` of either your own repo or your group repo
-   * replace `<login>` by your login - in this example `<login> = tomcl`
+* This file should be copied on branch `hlp22-indiv-assess-<login>` of either your own repo or your group repo
+   * replace `<login>` in filename `README-<login>.md` by your login - in his example `<login> = tomcl`
+   * name the branch as above, including your login. This branch is used only for your submission.
 * A link to the repo and branch must be on the `indiv` sheet of Tom Clarke's Team [google spreadsheet](https://docs.google.com/spreadsheets/d/1prQ5usnpu36FgtbsMO8j6_mwbdd34haSMOQKN2OkLBA/edit?usp=sharing)
 * The repo you use **must have your marker added as collaborator** (github login is on indiv assessment spreadsheet page)
 * Delete these instructions from your version of this readme
-* Delete my comments from your version of the readme (it is an example, not something you add lines to). Keep the headings and **replace the admin section links and notes with correct ones**.
+* Delete my comments from your version of the readme (it is an example, not something you add lines to). 
+Keep the headings and **replace the admin section links and notes with correct ones**.
 * Link to the sourcefile your code is contained in (drawblock or symbol) with an absolute hyperlink 
 to your repo and branch
 * Specify which code section and file you are doing as in my ppt (1,2,3), (buswire,symbol)
 * Add any changes to my section code allocations. This must be consistent with what has been 
 recorded in your team's file in my Team contributions repo](https://github.com/tomcl/hlp22docs/blob/main/README.md)  
 main branch ./TeamN.md (N = 1 - 9) file. The team contrib repo is as official record. This file will be 
-used marking and should have line numbers for easy access.
+used marking and should have line numbers for easy access. Expect to be marked down if your marker
+cannot easily find everything via links from this README.
 
 ## Team Shared Team.md
 
@@ -160,7 +163,7 @@ interview.
 * If code will be manually tested in interview say what the tests are that supplement your analysis
 * Interview code must be the assessed branch (not something else, or using later group code)
 * A good way to show code works is to explain how it differs from existing working code and how existing
-* functionality is preserved.
+functionality is preserved.
 
 # Extensions
 
@@ -179,6 +182,8 @@ $overallMark = \max (baseMark, extendedMark)$
 * Don't bother writing this section unless you have significant extension work, because the mark here 
   will usually not be counted in that case (see the marking scheme). Marks for extensions will be awarded 
 only for work of C level or above.
+
+* delete the above comemnts and add your satement of extensions as below*
 
 1.  List as numbered points the extensions (features) your code will support
 
