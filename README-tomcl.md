@@ -2,7 +2,7 @@
 
 ## Instructions
 
-* This file should be copied on branch `hlp22-indiv-assess-<login>` of either your own repo or your group repo
+* This file should be submitted (changed) on branch `hlp22-indiv-assess-<login>` of either your own repo or your group repo
    * replace `<login>` in filename `README-<login>.md` by your login - in his example `<login> = tomcl`
    * name the branch as above, including your login. This branch is used only for your submission.
 * A link to the repo and branch must be on the `indiv` sheet of Tom Clarke's Team [google spreadsheet](https://docs.google.com/spreadsheets/d/1prQ5usnpu36FgtbsMO8j6_mwbdd34haSMOQKN2OkLBA/edit?usp=sharing)
