@@ -118,7 +118,7 @@ let rec prepareSimulationMemoized
         if  isSame then
             simCache.StoredResult, rState
         else
-            printfn "New simulation"
+            //printfn "New simulation"
             let simResult = prepareSimulation diagramName rState loadedDependencies
             simCache <- {
                 Name = diagramName

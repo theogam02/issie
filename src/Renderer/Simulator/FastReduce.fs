@@ -312,6 +312,39 @@ let fastReduce (maxArraySize: int) (numStep: int) (isClockedReduction: bool) (co
 
         put0 sum
         put1 cout
+    | NbitsNot numberOfBits ->
+        let A = ins 0
+        let outDat = 
+            match A.Dat with
+            | BigWord a ->
+                BigWord ((bigint -1) ^^^ a)
+            | Word a ->
+                Word (~~~ a)
+        put0 {A with Dat = outDat}
+    | NbitsAnd numberOfBits ->
+        let A, B = ins 0, ins 1
+        let outDat =
+            match A.Dat, B.Dat with
+            | BigWord a, BigWord b ->
+                BigWord (a &&& b)
+            | Word a, Word b -> 
+                Word (a &&& b)
+            | a,b -> 
+                failwithf $"Inconsistent inputs to NbitsAnd {comp.FullName} A={a},{A}; B={b},{B}"
+
+        put0 {A with Dat = outDat}
+    | NbitsOr numberOfBits ->
+        let A, B = ins 0, ins 1
+        let outDat =
+            match A.Dat, B.Dat with
+            | BigWord a, BigWord b ->
+                BigWord (a ||| b)
+            | Word a, Word b -> 
+                Word (a ||| b)
+            | a,b -> 
+                failwithf $"Inconsistent inputs to NbitsOr {comp.FullName} A={a},{A}; B={b},{B}"
+
+        put0 {A with Dat = outDat}
     | NbitsXor numberOfBits ->
         let A, B = ins 0, ins 1
         let outDat =
@@ -322,6 +355,42 @@ let fastReduce (maxArraySize: int) (numStep: int) (isClockedReduction: bool) (co
                 Word (a ^^^ b)
             | a,b -> 
                 failwithf $"Inconsistent inputs to NBitsXOr {comp.FullName} A={a},{A}; B={b},{B}"
+
+        put0 {A with Dat = outDat}
+    | NbitsNand numberOfBits ->
+        let A, B = ins 0, ins 1
+        let outDat =
+            match A.Dat, B.Dat with
+            | BigWord a, BigWord b ->
+                BigWord ((bigint -1) ^^^ (a &&& b))
+            | Word a, Word b -> 
+                Word (~~~ (a &&& b))
+            | a,b -> 
+                failwithf $"Inconsistent inputs to NbitsNand {comp.FullName} A={a},{A}; B={b},{B}"
+
+        put0 {A with Dat = outDat}
+    | NbitsNor numberOfBits ->
+        let A, B = ins 0, ins 1
+        let outDat =
+            match A.Dat, B.Dat with
+            | BigWord a, BigWord b ->
+                BigWord ((bigint -1) ^^^ (a ||| b))
+            | Word a, Word b -> 
+                Word (~~~ (a ||| b))
+            | a,b -> 
+                failwithf $"Inconsistent inputs to NbitsNor {comp.FullName} A={a},{A}; B={b},{B}"
+
+        put0 {A with Dat = outDat}
+    | NbitsXnor numberOfBits ->
+        let A, B = ins 0, ins 1
+        let outDat =
+            match A.Dat, B.Dat with
+            | BigWord a, BigWord b ->
+                BigWord ((bigint -1) ^^^ (a ^^^ b))
+            | Word a, Word b -> 
+                Word (~~~ (a ^^^ b))
+            | a,b -> 
+                failwithf $"Inconsistent inputs to NbitsXnor {comp.FullName} A={a},{A}; B={b},{B}"
 
         put0 {A with Dat = outDat}
     | Decode4 ->

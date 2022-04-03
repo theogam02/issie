@@ -435,11 +435,40 @@ let getVerilogComponent (fs: FastSimulation) (fc: FastComponent) =
         let sum = outs 0
         let cout = outs 1
         $"assign {{%s{cout},%s{sum} }} = %s{a} + %s{b} + %s{cin};\n"
+    | NbitsNot n ->
+        let a = ins 0
+        let _not = outs 0
+        $"assign %s{_not} = ~ %s{a};\n"
+    | NbitsAnd n ->
+        let a = ins 0
+        let b = ins 1
+        let _and = outs 0
+        $"assign %s{_and} = %s{a} & %s{b};\n"
+    | NbitsOr n ->
+        let a = ins 0
+        let b = ins 1
+        let _or = outs 0
+        $"assign %s{_or} = %s{a} | %s{b};\n"
     | NbitsXor n ->
         let a = ins 0
         let b = ins 1
         let xor = outs 0
         $"assign {xor} = {a} ^ {b};\n"
+    | NbitsNand n ->
+        let a = ins 0
+        let b = ins 1
+        let nand = outs 0
+        $"assign %s{nand} = ~(%s{a} & %s{b});\n"
+    | NbitsNor n ->
+        let a = ins 0
+        let b = ins 1
+        let nor = outs 0
+        $"assign %s{nor} = ~(%s{a} | %s{b});\n"
+    | NbitsXnor n ->
+        let a = ins 0
+        let b = ins 1
+        let xnor = outs 0
+        $"assign %s{xnor} = ~(%s{a} ^ %s{b});\n"
     | Mux2 -> $"assign %s{outs 0} = %s{ins 2} ? %s{ins 1} : %s{ins 0};\n"
     | BusSelection (outW, lsb) ->
         let sel = sprintf "[%d:%d]" (outW + lsb - 1) lsb

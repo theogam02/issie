@@ -95,6 +95,56 @@ let private createNbitsAdderPopup (model:Model) dispatch =
         fun (dialogData : PopupDialogData) -> getInt dialogData < 1
     dialogPopup title body buttonText buttonAction isDisabled dispatch
 
+let private createNbitsNotPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits not"
+    let beforeInt =
+        fun _ -> str "How many bits should the operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating not %d" inputInt
+            createCompStdLabel (NbitsNot inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
+
+let private createNbitsAndPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits And gates"
+    let beforeInt =
+        fun _ -> str "How many bits should each operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating And %d" inputInt
+            createCompStdLabel (NbitsAnd inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
+
+let private createNbitsOrPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits Or gates"
+    let beforeInt =
+        fun _ -> str "How many bits should each operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating Or %d" inputInt
+            createCompStdLabel (NbitsOr inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
 
 let private createNbitsXorPopup (model:Model) dispatch =
     let title = sprintf "Add N bits XOR gates"
@@ -113,6 +163,56 @@ let private createNbitsXorPopup (model:Model) dispatch =
         fun (dialogData : PopupDialogData) -> getInt dialogData < 1
     dialogPopup title body buttonText buttonAction isDisabled dispatch
 
+let private createNbitsNandPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits Nand gates"
+    let beforeInt =
+        fun _ -> str "How many bits should each operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating Nand %d" inputInt
+            createCompStdLabel (NbitsNand inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
+
+let private createNbitsNorPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits Nor gates"
+    let beforeInt =
+        fun _ -> str "How many bits should each operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating Nor %d" inputInt
+            createCompStdLabel (NbitsNor inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
+
+let private createNbitsXnorPopup (model:Model) dispatch =
+    let title = sprintf "Add N bits Xnor gates"
+    let beforeInt =
+        fun _ -> str "How many bits should each operand have?"
+    let intDefault = model.LastUsedDialogWidth
+    let body = dialogPopupBodyOnlyInt beforeInt intDefault dispatch
+    let buttonText = "Add"
+    let buttonAction =
+        fun (dialogData : PopupDialogData) ->
+            let inputInt = getInt dialogData
+            //printfn "creating Xnor %d" inputInt
+            createCompStdLabel (NbitsXnor inputInt) {model with LastUsedDialogWidth = inputInt} dispatch
+            dispatch ClosePopup
+    let isDisabled =
+        fun (dialogData : PopupDialogData) -> getInt dialogData < 1
+    dialogPopup title body buttonText buttonAction isDisabled dispatch
 
 let private createSplitWirePopup model dispatch =
     let title = sprintf "Add SplitWire node" 
@@ -381,6 +481,17 @@ let viewCatalogue model dispatch =
                           catTip1 "Nor"  (fun _ -> createCompStdLabel Nor model dispatch) "Output is 0 if either of the two inputs are 1"
                           catTip1 "Xnor" (fun _ -> createCompStdLabel Xnor model dispatch) "Output is 1 if the two inputs have the same values"]
                     makeMenuGroup
+                        "N Bit Gates"
+                        [
+                          catTip1 "N bits NOT" (fun _ -> createNbitsNotPopup model dispatch) "N bit NOT gate"
+                          catTip1 "N bits AND" (fun _ -> createNbitsAndPopup model dispatch) "N bit AND gate"
+                          catTip1 "N bits OR" (fun _ -> createNbitsOrPopup model dispatch) "N bit OR gates"
+                          catTip1 "N bits XOR" (fun _ -> createNbitsXorPopup model dispatch) "N bit XOR gates - use to make subtractor or comparator"
+                          catTip1 "N bits NAND" (fun _ -> createNbitsNandPopup model dispatch) "N bit NAND gates" 
+                          catTip1 "N bits NOR" (fun _ -> createNbitsNorPopup model dispatch) "N bit NOR gates"
+                          catTip1 "N bits XNOR" (fun _ -> createNbitsXnorPopup model dispatch) "N bit XNOR gates"
+                        ]
+                    makeMenuGroup
                         "Mux / Demux"
                         [ catTip1 "Mux2" (fun _ -> createCompStdLabel Mux2 model dispatch) "Selects the one of its two input busses numbered by the value of the select input
                                                                                 to be the output. Adjusts bus width to match."
@@ -389,8 +500,7 @@ let viewCatalogue model dispatch =
                                                                                                 of the 2 bit sel input is equal to Data, the others are 0"]
                     makeMenuGroup
                         "Arithmetic"
-                        [ catTip1 "N bits adder" (fun _ -> createNbitsAdderPopup model dispatch) "N bit Binary adder with carry in to bit 0 and carry out from bit N-1"
-                          catTip1 "N bits XOR" (fun _ -> createNbitsXorPopup model dispatch) "N bit XOR gates - use to make subtractor or comparator"]
+                        [ catTip1 "N bits adder" (fun _ -> createNbitsAdderPopup model dispatch) "N bit Binary adder with carry in to bit 0 and carry out from bit N-1" ]
 
                     makeMenuGroup
                         "Flip Flops and Registers"

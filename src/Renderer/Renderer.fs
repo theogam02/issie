@@ -133,7 +133,9 @@ let fileMenu (dispatch) =
 
 let viewMenu dispatch =
     let sheetDispatch sMsg = dispatch (Sheet sMsg)
-    let dispatch = Sheet.KeyPress >> sheetDispatch
+    let keyDispatch = Sheet.KeyPress >> sheetDispatch
+    let wireDispatch = BusWire.WireView >> Sheet.Wire >> sheetDispatch
+    let symbolDispatch = Symbol.SymbolRenderCurved >> Sheet.Symbol >> sheetDispatch
     
     let devToolsKey = if isMac then "Alt+Command+I" else "Ctrl+Shift+I"
     makeMenu false "View" [
@@ -144,12 +146,26 @@ let viewMenu dispatch =
         makeRoleItem "Zoom  Out" (Some "CmdOrCtrl+Shift+-") MenuItemRole.ZoomOut
         makeRoleItem "Reset Zoom" (Some "CmdOrCtrl+0") MenuItemRole.ResetZoom
         menuSeparator
-        makeItem "Diagram Zoom In" (Some "Shift+Plus") (fun ev -> dispatch Sheet.KeyboardMsg.ZoomIn)
-        makeItem "Diagram Zoom Out" (Some "Shift+-") (fun ev -> dispatch Sheet.KeyboardMsg.ZoomOut)
-        makeItem "Diagram Zoom to Fit" (Some "CmdOrCtrl+W") (fun ev -> dispatch Sheet.KeyboardMsg.CtrlW)
+        makeItem "Diagram Zoom In" (Some "Shift+Plus") (fun ev -> keyDispatch Sheet.KeyboardMsg.ZoomIn)
+        makeItem "Diagram Zoom Out" (Some "Shift+-") (fun ev -> keyDispatch Sheet.KeyboardMsg.ZoomOut)
+        makeItem "Diagram Zoom to Fit" (Some "CmdOrCtrl+W") (fun ev -> keyDispatch Sheet.KeyboardMsg.CtrlW)
         menuSeparator
         makeCondItem (JSHelpers.debugLevel <> 0) "Toggle Dev Tools" (Some devToolsKey) (fun _ -> 
             renderer.ipcRenderer.send("toggle-dev-tools", [||]) |> ignore)
+
+        menuSeparator
+        makeMenu false "Wire View" [
+            makeItem "Traditional" None (fun ev ->  wireDispatch BusWire.WireDisp.Traditional)
+            makeItem "Radiused" None (fun ev -> wireDispatch BusWire.WireDisp.Radiused)
+            makeItem "Modern" None (fun ev -> wireDispatch BusWire.WireDisp.Modern)
+
+        ]
+        
+        makeMenu false "Symbol View" [
+            makeItem "Sharp Corners" None (fun ev ->  symbolDispatch Symbol.SymbolDisp.Sharp)
+            makeItem "Curved Corners" None (fun ev ->  symbolDispatch Symbol.SymbolDisp.Curved)
+
+        ]
     ]
 
 

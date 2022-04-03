@@ -319,7 +319,7 @@ let update (msg : Msg) oldModel =
         let inferMsg = JSDiagramMsg <| InferWidths()
         let editCmds = [inferMsg; ClosePropertiesNotification] |> List.map Cmd.ofMsg
         firstTip <- true
-        { model with RightPaneTabVisible = newTab }, 
+        { model with RightPaneTabVisible = newTab },
         match newTab with 
         | Properties -> Cmd.batch <| editCmds
         | Catalogue -> Cmd.batch  <| editCmds

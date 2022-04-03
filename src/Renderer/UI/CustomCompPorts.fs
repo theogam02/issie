@@ -433,11 +433,16 @@ let updateInstance (newSig: Signature) (sheet:string,cid:string,oldSig:Signature
                     let newInPorts = reorderPorts newIn oldIn comp.InputPorts
                     let newOutPorts = reorderPorts newOut oldOut comp.OutputPorts
                     let ct' = {ct with InputLabels = fst newSig; OutputLabels = snd newSig}
-                    {comp with Type = Custom ct'; InputPorts=newInPorts; OutputPorts=newOutPorts}
+                    {comp with
+                        Type = Custom ct'
+                        InputPorts = newInPorts
+                        OutputPorts = newOutPorts
+                        SymbolInfo = None // Discard symbol modifications
+                    }
 
                 else
                     printfn "What? Signatures do not match after changes are made"
-                    comp
+                    {comp with SymbolInfo = None}
         | _ -> comp // no change (should never happen?)
 #if ASSERTS
     assertThat 

@@ -32,7 +32,7 @@ open System
 let quantifyChanges (ldc1:LoadedComponent) (ldc2:LoadedComponent) =
     let comps1,conns1 = ldc1.CanvasState
     let comps2,conns2 = ldc2.CanvasState
-    let reduceComp comp1 =
+    let reduceComp (comp1: Component) =
         {comp1 with X=0;Y=0}
     let reduceConn conn1 =
         {conn1 with Vertices = []}
@@ -128,6 +128,7 @@ let private displayFileErrorNotification err dispatch =
     let note = errorFilesNotification err
     dispatch <| SetFilesNotification note
 
+
 /// Send messages to change Diagram Canvas and specified sheet waveSim in model
 let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps model dispatch =
     // it seems still need this, however code has been deleted!
@@ -135,6 +136,7 @@ let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps mod
     
     let name = compToSetup.Name
     let components, connections = compToSetup.CanvasState
+    
     //printfn "Loading..."
     let msgs = 
         [
@@ -150,8 +152,9 @@ let private loadStateIntoModel (compToSetup:LoadedComponent) waveSim ldComps mod
             //printfn "Check 1..."
     
             //Load components
-            Sheet (Sheet.Wire (BusWire.Symbol (Symbol.LoadComponents components )))
-            Sheet Sheet.UpdateBoundingBoxes
+            Sheet (Sheet.Wire (BusWire.Symbol (Symbol.LoadComponents (components,compToSetup,ldComps) )))
+            Sheet Sheet.UpdateSymbolBoundingBoxes
+            Sheet Sheet.UpdateLabelBoundingBoxes
     
             Sheet (Sheet.Wire (BusWire.LoadConnections connections))
 
@@ -1012,13 +1015,26 @@ let viewTopMenu model messagesFunc simulateButtonFunc dispatch =
                                 [ simulateButtonFunc compIds model dispatch ] ]
                       Navbar.End.div []
                           [ Navbar.Item.div []
-                                [ Button.button 
-                                    [ Button.OnClick(fun _ -> PopupView.viewInfoPopup dispatch) 
+                                [ Button.button
+                                    [ Button.OnClick (fun _ -> viewInfoPopup dispatch)
                                       Button.Color IsInfo
                                     ] 
                                     [ str "Info" ] 
+                                ] ]
+                      Navbar.Item.div []
+                          [ Navbar.Item.div []
+                                [ Input.input
+                                    [ Input.Placeholder "Symbol Label Search"
+                                      Input.OnChange (fun ev ->
+                                            Symbol.HighlightLabels ev.Value
+                                            |> Sheet.Symbol
+                                            |> Sheet
+                                            |> dispatch
+                                        )
+                                    ]
                                   // add space padding on RH of navbar to improve top bar formatting
                                   // this is a bit of a hack - but much easier than matching styles
                                   Text.div 
                                     [Props [Style [PaddingRight "7000px"]]] [str ""]
-                                ] ] ] ] ]
+                                ] ]
+                    ] ] ]

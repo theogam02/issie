@@ -625,7 +625,7 @@ let rec private findName (compIds: ComponentId Set) (sd: SimulationData) (net: N
                 [ { LabName = compLbl; BitLimits = w - 1, 0 } ] 
             | Demux2 -> 
                 [ { LabName = compLbl + "." + string outPortInt; BitLimits = 0, 0 } ]
-            | NbitsXor w -> 
+            | NbitsNot w | NbitsAnd w | NbitsOr w | NbitsXor w | NbitsNand w | NbitsNor w | NbitsXnor w -> 
                 [ { LabName = compLbl; BitLimits = w - 1, 0 } ]
             | NbitsAdder w ->
                 match outPortInt with

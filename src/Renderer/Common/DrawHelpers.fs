@@ -3,6 +3,7 @@
 *)
 
 module DrawHelpers
+open CommonTypes
 open Browser.Types
 open Fable.Core.JsInterop
 open Fable.React
@@ -13,52 +14,6 @@ open Fable.React.Props
 //------------------------------Types--------------------------------------//
 //-------------------------------------------------------------------------//
 
-/// Position on SVG canvas
-/// Positions can be added, subtracted, scaled using overloaded +,-, *  operators
-/// currently these custom operators are not used in Issie - they should be!
-type XYPos =
-    {
-        X : float
-        Y : float
-    }
-
-    /// allowed tolerance when comparing positions with floating point errors for equality
-    static member epsilon = 0.0000001
-    /// Add postions as vectors (overlaoded operator)
-
-    static member ( + ) (left: XYPos, right: XYPos) =
-        { X = left.X + right.X; Y = left.Y + right.Y }
-
-    /// Subtract positions as vectors (overloaded operator)
-    static member ( - ) (left: XYPos, right: XYPos) =
-        { X = left.X - right.X; Y = left.Y - right.Y }
-
-    /// Scale a position by a number (overloaded operator).
-    static member ( * ) (pos: XYPos, scaleFactor: float) =
-        { X = pos.X*scaleFactor; Y = pos.Y * scaleFactor }
-
-    /// Compare positions as vectors. Comparison is approximate so 
-    /// it will work even with floating point errors. New infix operator.
-    static member ( =~ ) (left: XYPos, right: XYPos) =
-        abs (left.X - right.X) <= XYPos.epsilon && abs (left.Y - right.Y) <= XYPos.epsilon
-
-let euclideanDistance (pos1: XYPos) (pos2:XYPos) = 
-    let vec = pos1 - pos2
-    sqrt(vec.X**2 + vec.Y**2)
-
-/// example use of comparison operator: note that F# type inference will not work without at least
-/// one of the two operator arguments having a known XYPos type.
-let private testXYPosComparison a  (b:XYPos) = 
-    a =~ b
-
-
-type BoundingBox = {
-    X: float
-    Y: float
-    W: float
-    H: float
-}
-
 type PortLocation = {
     X: float
     Y: float
@@ -66,10 +21,12 @@ type PortLocation = {
 }
 
 type MouseOp = 
-    /// button up
+    /// Button up
     | Up
-    /// button down
+    /// Button down
     | Down
+    /// Right button down
+    | RightDown
     /// Move with button up
     | Move 
     /// Move with button Down
@@ -78,7 +35,9 @@ type MouseOp =
 type MouseT = {
     Pos: XYPos
     Movement: XYPos
-    Op: MouseOp}
+    Op: MouseOp
+    ShiftKey: bool
+}
 
 /// Record to help draw SVG circles
 type Circle = {
@@ -240,6 +199,17 @@ let makePolygon (points: string) (polygonParameters: Polygon) =
             SVGAttr.Fill polygonParameters.Fill
             SVGAttr.FillOpacity polygonParameters.FillOpacity
     ] []
+
+    
+/// Makes a polygon ReactElement, points are to be given as a correctly formatted SVGAttr.Points string 
+let makeClosedPath (points: string) (polygonParameters: Polygon) =
+    path [
+            D points
+            SVGAttr.Stroke polygonParameters.Stroke
+            SVGAttr.StrokeWidth polygonParameters.StrokeWidth
+            SVGAttr.Fill polygonParameters.Fill
+            SVGAttr.FillOpacity polygonParameters.FillOpacity
+    ] []
     
 /// Makes a circle ReactElement
 let makeCircle (centreX: float) (centreY: float) (circleParameters: Circle) =
@@ -266,14 +236,11 @@ let makeText (posX: float) (posY: float) (displayedText: string) (textParameters
                 FontSize textParameters.FontSize
                 Fill textParameters.Fill
                 UserSelect textParameters.UserSelect
-                
             ]
         ] [str <| sprintf "%s" (displayedText)]
 
-
-
 /// deliver string suitable for HTML color from a HighlightColor type value
-let getColorString (col: CommonTypes.HighLightColor) =
+let getColorString (col: HighLightColor) =
     (sprintf "%A" col).ToLower()
 
 
@@ -282,9 +249,3 @@ let getColorString (col: CommonTypes.HighLightColor) =
 
 /// these determine the size of the draw block canvas relative to the objects on it.
 let canvasUnscaledSize = 3500.0
-
-
-
-
-    
-

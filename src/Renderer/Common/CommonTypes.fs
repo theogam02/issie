@@ -153,6 +153,69 @@ module CommonTypes
     // Canvas state mapped to f# data structure //
     //==========================================//
 
+    // The next types are not strictly necessary, but help in understanding what is what.
+    // Used consistently they provide type protection that greatly reduces coding errors
+
+    /// SHA hash unique to a component - common between JS and F#
+    [<Erase>]
+    type ComponentId      = | ComponentId of string
+
+    /// SHA hash unique to a segment
+    [<Erase>]
+    type SegmentId      = | SegmentId of string
+
+    /// SHA hash unique to a connection - common between JS and F#
+
+    /// SHA hash unique to a connection - common between JS and F#
+    [<Erase>]
+    type ConnectionId     = | ConnectionId of string
+
+    /// Human-readable name of component as displayed on sheet.
+    /// For I/O/labelIO components a width indication eg (7:0) is also displayed, but NOT included here
+    [<Erase>]
+    type ComponentLabel   = | ComponentLabel of string
+
+    /// SHA hash unique to a component port - common between JS and F#.
+    /// Connection ports and connected component ports have the same port Id
+    /// InputPortId and OutputPortID wrap the hash to distinguish component
+    /// inputs and outputs some times (e.g. in simulation)
+    [<Erase>]
+    type InputPortId      = | InputPortId of string
+
+    /// SHA hash unique to a component port - common between JS and F#.
+    /// Connection ports and connected component ports have the same port Id
+    /// InputPortId and OutputPortID wrap the hash to distinguish component
+    /// inputs and outputs some times (e.g. in simulation)
+    [<Erase>]
+    type OutputPortId     = | OutputPortId of string
+
+    /// SHA hash unique to a component port - common between JS and F#.
+    /// Connection ports and connected component ports have the same port Id
+    /// PortID wraps the hash to distinguish component
+    /// ports that are either inputs or outputs
+    [<Erase>]
+    type PortId     = | PortId of string
+
+    /// Port numbers are sequential unique with port lists.
+    /// Inputs and Outputs are both numberd from 0 up.
+    [<Erase>]
+    type InputPortNumber  = | InputPortNumber of int
+
+    /// Port numbers are sequential unique with port lists.
+    /// Inputs and Outputs are both numberd from 0 up.
+    [<Erase>]
+    type OutputPortNumber = | OutputPortNumber of int
+
+    let inline portIdToInputPortId (id: PortId) : InputPortId =
+        id |> string |> InputPortId
+
+    let inline portIdToOutputPortId (id: PortId) : OutputPortId =
+        id |> string |> OutputPortId
+
+    let inline portIdFromInputOutputPortId id : PortId =
+        id |> string |> PortId
+
+
     /// Specify the type of a port in a Component.
     type PortType = Input | Output
 
@@ -203,6 +266,9 @@ module CommonTypes
         PortType : PortType 
         HostId : string
     }
+
+    /// Direction that port exits the symbol
+    type PortDirection = | PTop | PLeft | PRight | PBottom
 
     // NB - this.Text() is not currently used.
 
@@ -279,7 +345,10 @@ module CommonTypes
         | Constant1 of Width: int * ConstValue: int64 * DialogTextValue: string
         | Not | And | Or | Xor | Nand | Nor | Xnor |Decode4
         | Mux2 | Demux2
-        | NbitsAdder of BusWidth: int | NbitsXor of BusWidth:int
+        | NbitsAdder of BusWidth: int
+        | NbitsNot of BusWidth:int
+        | NbitsAnd of BusWidth:int | NbitsOr of BusWidth:int | NbitsXor of BusWidth:int
+        | NbitsNand of BusWidth:int | NbitsNor of BusWidth:int | NbitsXnor of BusWidth:int
         | Custom of CustomComponentType // schematic sheet used as component
         | MergeWires | SplitWire of BusWidth: int // int is bus width
         // DFFE is a DFF with an enable signal.
@@ -305,6 +374,143 @@ module CommonTypes
         | AsyncROM1 _ -> AsyncROM1
         | _ -> failwithf $"Can't get memory type from {cType}"
 
+    /// Matrix of the form:
+    /// | X.X  Y.X |
+    /// | X.Y  Y.Y |
+    /// Where the X and Y are of type XYPos
+    /// Includes overloads for matrix multiplication translation and scaling
+    /// and for matrix multiplication with a vector
+    type Mat2x2 = 
+        {
+            X: XYPos
+            Y: XYPos
+        }
+
+        /// Add postions as vectors (overlaoded operator)
+        static member ( + ) (left: Mat2x2, right: Mat2x2) =
+            { X = left.X + right.X; Y = left.Y + right.Y }
+
+        /// Subtract positions as vectors (overloaded operator)
+        static member ( - ) (left: Mat2x2, right: Mat2x2) =
+            { X = left.X - right.X; Y = left.Y - right.Y }
+
+        /// Scale a position by a number (overloaded operator).
+        static member ( * ) (mat: Mat2x2, scaleFactor: float) =
+            { X = mat.X*scaleFactor; Y = mat.Y * scaleFactor }
+
+        /// Matrix multiplication with matrix (overloaded operator)
+        static member ( * ) (left: Mat2x2, right: Mat2x2) =
+            let XX = left.X.X * right.X.X + left.Y.X * right.X.Y
+            let XY = left.X.Y * right.X.X + left.Y.Y * right.X.Y
+            let YX = left.X.X * right.Y.X + left.Y.X * right.Y.Y
+            let YY = left.X.Y * right.Y.X + left.Y.Y * right.Y.Y
+            { X = { X = XX; Y = XY }; Y = { X = YX; Y = YY } }
+
+    /// Position on SVG canvas
+    /// Positions can be added, subtracted, scaled using overloaded +,-, *  operators
+    /// currently these custom operators are not used in Issie - they should be!
+    and XYPos =
+        {
+            X : float
+            Y : float
+        }
+
+        /// allowed tolerance when comparing positions with floating point errors for equality
+        static member epsilon = 0.0000001
+        /// Add postions as vectors (overlaoded operator)
+        static member ( + ) (left: XYPos, right: XYPos) =
+            { X = left.X + right.X; Y = left.Y + right.Y }
+
+        /// Subtract positions as vectors (overloaded operator)
+        static member ( - ) (left: XYPos, right: XYPos) =
+            { X = left.X - right.X; Y = left.Y - right.Y }
+
+        /// Scale a position by a number (overloaded operator).
+        static member ( * ) (pos: XYPos, scaleFactor: float) =
+            { X = pos.X*scaleFactor; Y = pos.Y * scaleFactor }
+
+        /// Compare positions as vectors. Comparison is approximate so 
+        /// it will work even with floating point errors. New infix operator.
+        static member ( =~ ) (left: XYPos, right: XYPos) =
+            abs (left.X - right.X) <= XYPos.epsilon && abs (left.Y - right.Y) <= XYPos.epsilon
+
+        /// Vector dot product (overloaded operator)
+        static member ( * ) (left: XYPos, right: XYPos) =
+            left.X * right.X + left.Y * right.Y
+
+        /// Vector Multiplication with matrix (overloaded operator)
+        static member ( * ) (left: Mat2x2, right: XYPos) =
+            let X = right.X * left.X.X + right.Y * left.Y.X
+            let Y = right.X * left.X.Y + right.Y * left.Y.Y
+            { X = X; Y = Y }
+
+    type Rotation =
+        | D0
+        | D90
+        | D180
+        | D270
+
+    /// Returns a 2D rotaion matrix
+    let getRotationMatrix (rotation: Rotation) : Mat2x2 =
+        let cost, sint =
+            match rotation with
+            | D0 -> (1,0)
+            | D90 -> (0,1)
+            | D180 -> (-1,0)
+            | D270 -> (0,-1)
+
+        {X = {X = cost; Y = sint}; Y = {X = -sint; Y = cost}}
+
+    /// A 2D reflection matrix for vertical reflection
+    let reflectionMatrix : Mat2x2 =
+        {X = {X = 1.0; Y = 0.0}; Y = {X = 0.0; Y = -1.0}}
+
+    /// A 2D identity matrix
+    let identityMatrix : Mat2x2 =
+        {X = {X = 1.0; Y = 0.0}; Y = {X = 0.0; Y = 1.0}}
+
+    let euclideanDistance (pos1: XYPos) (pos2:XYPos) = 
+        let vec = pos1 - pos2
+        sqrt(vec.X**2 + vec.Y**2)
+
+    let magnitudeSquared (a: XYPos) : float =
+        a.X * a.X + a.Y * a.Y
+
+    let magnitude (a: XYPos) : float =
+        sqrt(a.X * a.X + a.Y * a.Y)
+
+    let clamp (minv: float) (maxv: float) (v: float) : float =
+        max minv (min maxv v)
+        
+    let midpoint (pos1: XYPos) (pos2:XYPos) = 
+        let sum = pos1 + pos2
+        { X = sum.X/2.0; Y = sum.Y/2.0 }
+
+    let closestPoint (pos1: XYPos) (pos2:XYPos) (query:XYPos) =
+        let distFromPos1 = euclideanDistance pos1 query
+        let distFromPos2 = euclideanDistance pos2 query
+        if distFromPos1 < distFromPos2 then pos1 else pos2
+
+    /// example use of comparison operator: note that F# type inference will not work without at least
+    /// one of the two operator arguments having a known XYPos type.
+    let private testXYPosComparison a  (b: XYPos) = 
+        a =~ b
+
+    /// (X, Y) represent the bounding boxe's top left corner
+    type BoundingBox = {
+        X: float
+        Y: float
+        W: float
+        H: float
+    }
+
+    /// Contains data that is necessary for creating a symbol from a component
+    type SymbolInfo = {
+        Transform : Mat2x2
+        PortOffsets : Map<PortId, XYPos>
+        LabelBoundingBox : BoundingBox
+        PortLabels : Map<PortId, string> option // Use default if None
+    }
 
     /// JSComponent mapped to F# record.
     /// Id uniquely identifies the component within a sheet.
@@ -315,10 +521,22 @@ module CommonTypes
         Label : string // All components have a label that may be empty.
         InputPorts : Port list // position on this list determines inputPortNumber
         OutputPorts : Port list // position in this lits determines OutputPortNumber
+        // (X, Y) represent the component's top left corner
         X : int
         Y : int
         H : int
         W : int
+        SymbolInfo : SymbolInfo option
+        IsClocked : bool
+    }
+
+    /// Vertex of JSConnection map to F# record.
+    /// Autoroute is true if the vertex is connected to only segments that are autoroutable.
+    /// It is false if connected to any unroutable (aka dragged) ones.
+    type Vertex = {
+        X : float
+        Y : float
+        Autoroute: bool
     }
 
     /// JSConnection mapped to F# record.
@@ -327,7 +545,7 @@ module CommonTypes
         Id : string
         Source : Port
         Target : Port
-        Vertices : (float * float) list
+        Vertices : Vertex list
     }
 
     /// F# data describing the contents of a single schematic sheet.
@@ -361,54 +579,7 @@ module CommonTypes
             | DarkSlateGrey -> "darkslategrey"
             | Thistle -> "thistle"
             | c -> sprintf "%A" c
-            
-            
 
-    // The next types are not strictly necessary, but help in understanding what is what.
-    // Used consistently they provide type protection that greatly reduces coding errors
-
-    /// SHA hash unique to a component - common between JS and F#
-    [<Erase>]
-    type ComponentId      = | ComponentId of string
-
-    /// SHA hash unique to a segment
-    [<Erase>]
-    type SegmentId      = | SegmentId of string
-
-    /// SHA hash unique to a connection - common between JS and F#
-
-    /// SHA hash unique to a connection - common between JS and F#
-    [<Erase>]
-    type ConnectionId     = | ConnectionId of string
-
-    /// Human-readable name of component as displayed on sheet.
-    /// For I/O/labelIO components a width indication eg (7:0) is also displayed, but NOT included here
-    [<Erase>]
-    type ComponentLabel   = | ComponentLabel of string
-
-    /// SHA hash unique to a component port - common between JS and F#.
-    /// Connection ports and connected component ports have the same port Id
-    /// InputPortId and OutputPortID wrap the hash to distinguish component
-    /// inputs and outputs some times (e.g. in simulation)
-    [<Erase>]
-    type InputPortId      = | InputPortId of string
-
-    /// SHA hash unique to a component port - common between JS and F#.
-    /// Connection ports and connected component ports have the same port Id
-    /// InputPortId and OutputPortID wrap the hash to distinguish component
-    /// inputs and outputs some times (e.g. in simulation)
-    [<Erase>]
-    type OutputPortId     = | OutputPortId of string
-
-    /// Port numbers are sequential unique with port lists.
-    /// Inputs and Outputs are both numberd from 0 up.
-    [<Erase>]
-    type InputPortNumber  = | InputPortNumber of int
-
-    /// Port numbers are sequential unique with port lists.
-    /// Inputs and Outputs are both numberd from 0 up.
-    [<Erase>]
-    type OutputPortNumber = | OutputPortNumber of int
 
     (*---------------------------Types for wave Simulation----------------------------------------*)
 

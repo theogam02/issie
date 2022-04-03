@@ -145,7 +145,9 @@ let private makeNumberOfBitsField model (comp:Component) text dispatch =
     
     let title, width =
         match comp.Type with
-        | Input w | Output w | NbitsAdder w | NbitsXor w | Register w | RegisterE w | Viewer w -> "Number of bits", w
+        | Input w | Output w | NbitsAdder w
+        | NbitsNot w | NbitsAnd w | NbitsOr w | NbitsXor w | NbitsNand w | NbitsNor w | NbitsXnor w
+        | Register w | RegisterE w | Viewer w -> "Number of bits", w
         | SplitWire w -> "Number of bits in the top (LSB) wire", w
         | BusSelection( w, _) -> "Number of bits selected: width", w
         | BusCompare( w, _) -> "Bus width", w
@@ -281,7 +283,7 @@ let private makeDescription (comp:Component) model dispatch =
                      The input bits connected are displayed in the schematic symbol"
         ]
     | IOLabel -> div [] [
-        str "Label on Wire or Bus. Labels with the same name connect wires. Each label has input on left and output on right. \
+        str "Label on Wire or Bus. Labels with the same name connect wires. \
             No output connection is required from a set of labels. Since a set represents one wire of bus, exactly one input connection is required. \
             Labels can be used:"  
         br [] ;
@@ -296,7 +298,13 @@ let private makeDescription (comp:Component) model dispatch =
     | MergeWires -> div [] [ str "Merge two wires of width n and m into a single wire of width n+m." ]
     | SplitWire _ -> div [] [ str "Split a wire of width n+m into two wires of width n and m."]
     | NbitsAdder numberOfBits -> div [] [ str <| sprintf "%d bit(s) adder." numberOfBits ]
-    | NbitsXor numberOfBits  -> div [] [ str <| sprintf "%d XOR gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsNot numberOfBits -> div [] [ str <| sprintf "%d NOT gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsAnd numberOfBits -> div [] [ str <| sprintf "%d AND gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsOr numberOfBits -> div [] [ str <| sprintf "%d OR gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsXor numberOfBits -> div [] [ str <| sprintf "%d XOR gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsNand numberOfBits -> div [] [ str <| sprintf "%d NAND gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsNor numberOfBits -> div [] [ str <| sprintf "%d NOR gates with %d outputs." numberOfBits numberOfBits]
+    | NbitsXnor numberOfBits -> div [] [ str <| sprintf "%d XNOR gates with %d outputs." numberOfBits numberOfBits]
     | Decode4 -> div [] [ str <| "4 bit decoder: Data is output on the Sel output, all other outputs are 0."]
     | Custom custom ->
         let styledSpan styles txt = span [Style styles] [str <| txt]
@@ -361,7 +369,9 @@ let private makeDescription (comp:Component) model dispatch =
 
 let private makeExtraInfo model (comp:Component) text dispatch =
     match comp.Type with
-    | Input _ | Output _ | NbitsAdder _ | NbitsXor _ | Viewer _ ->
+    | Input _ | Output _ | NbitsAdder _
+    | NbitsNot _ | NbitsAnd _ | NbitsOr _ | NbitsXor _ | NbitsNand _ | NbitsNor _ | NbitsXnor _
+    | Viewer _ ->
         makeNumberOfBitsField model comp text dispatch
     | SplitWire _ ->
         makeNumberOfBitsField model comp text dispatch
@@ -382,6 +392,89 @@ let private makeExtraInfo model (comp:Component) text dispatch =
              makeConstantDialog model comp text dispatch
     | _ -> div [] []
 
+let private makeCheckbox
+    (name: string)
+    (ticked: bool)
+    (onChange: Browser.Types.Event -> unit)
+    : ReactElement =
+    g [Style [Display DisplayOptions.InlineBlock]] [
+        input
+            [
+                Type "checkbox"
+                Class "check"
+                Checked ticked
+                OnChange onChange
+            ]
+        label [] [str name]
+    ]
+
+/// Creates the react element for the port movement interface for a custom component
+let private makePortMovementInterface
+    (model: Model)
+    (comp: Component)
+    (sheetDispatch: Sheet.Msg -> unit)
+    : ReactElement =
+    match comp.Type with
+    | Custom custom ->
+        // Clear port selection belonging to previously selected component
+        if ComponentId comp.Id <> fst model.Sheet.SelectedPorts then
+            model.Sheet.DeselectAllPorts sheetDispatch
+
+        let inputPortLabelIdPairs =
+            custom.InputLabels
+            |> List.mapi (fun i (portLabel, _) -> (portLabel, PortId comp.InputPorts[i].Id))
+        let outputPortLabelIdPairs =
+            custom.OutputLabels
+            |> List.mapi (fun i (portLabel, _) -> (portLabel, PortId comp.OutputPorts[i].Id))
+
+        let onCheckbox (compId: ComponentId) (portId: PortId) (ev: Browser.Types.Event) : unit =
+            if ev.Checked then
+                model.Sheet.SelectPort sheetDispatch compId portId
+            else
+                model.Sheet.DeselectPort sheetDispatch compId portId
+
+        let arrowButton (isRightArrow: bool) : ReactElement =
+            Button.button
+                [
+                    Button.OnClick (fun _ ->
+                        model.Sheet.MovePorts
+                            sheetDispatch
+                            (ComponentId comp.Id)
+                            (snd model.Sheet.SelectedPorts)
+                            isRightArrow
+                            10.0
+                    )
+                    Button.Color IsGrey
+                    Button.Size IsMedium
+                ]
+                [str <| if isRightArrow then ">" else "<"]
+
+        div [] [
+            span [Style [FontWeight "bold"; FontSize "15px"]] [str "Port Movement Interface"]
+            br []
+            p [Style [FontStyle "italic"; FontSize "13px"; LineHeight "1.1"]] [
+                str "The left arrow button moves selected ports to the left along the symbol edges,
+                    where left is defined when looking from the symbol's centre. Similarly for the
+                    right arrow button."
+            ]
+            br []
+            div [] (
+                inputPortLabelIdPairs @ outputPortLabelIdPairs
+                |> List.map (fun (label, id) ->
+                                makeCheckbox
+                                    label
+                                    (List.contains id (snd model.Sheet.SelectedPorts))
+                                    (onCheckbox (ComponentId comp.Id) id)
+                            )
+            )
+            br []
+            arrowButton false
+            arrowButton true
+        ]
+    | _ ->
+        // Don't allow port movement for non-custom components
+        div [] []
+
 
 let viewSelectedComponent (model: ModelType.Model) dispatch =
     let sheetDispatch sMsg = dispatch (Sheet sMsg)
@@ -401,16 +494,16 @@ let viewSelectedComponent (model: ModelType.Model) dispatch =
             makeExtraInfo model comp label' dispatch
             let required = match comp.Type with | SplitWire _ | MergeWires | BusSelection _ -> false | _ -> true
             textFormField required "Component Name" label' (fun text ->
-                // TODO: removed formatLabel for now
-                //setComponentLabel model sheetDispatch comp (formatLabel comp text)
-                match formatLabelText text with
-                | Some label -> 
-                    setComponentLabel model sheetDispatch comp label
-                    dispatch <| SetPopupDialogText (Some label)
-                | None -> ()
-                //updateNames model (fun _ _ -> model.WaveSim.Ports) |> StartWaveSim |> dispatch
-                dispatch (ReloadSelectedComponent model.LastUsedDialogWidth) // reload the new component
+                    // TODO: removed formatLabel for now
+                    //setComponentLabel model sheetDispatch comp (formatLabel comp text)
+                    match formatLabelText text with
+                    | Some label -> 
+                        setComponentLabel model sheetDispatch comp label
+                        dispatch <| SetPopupDialogText (Some label)
+                    | None -> ()
+                    dispatch (ReloadSelectedComponent model.LastUsedDialogWidth) // reload the new component
                 )
+            makePortMovementInterface model comp sheetDispatch
         ]    
     | _ -> div [] [ str "Select a component in the diagram to view or change its properties, for example number of bits." ]
 

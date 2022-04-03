@@ -279,12 +279,12 @@ let displayView model dispatch =
                                                     
                                     (Tabs.tab // simulation tab to do combinational simulation
                                         [ Tabs.Tab.IsActive (model.RightPaneTabVisible = Simulation) ]
-                                        [ a [  OnClick (fun _ -> 
-                                                if model.RightPaneTabVisible <> WaveSim 
+                                        [ a [  OnClick (fun _ ->
+                                                if model.RightPaneTabVisible <> WaveSim
                                                 then
-                                                    dispatch <| ChangeRightTab Simulation ) 
+                                                    dispatch <| ChangeRightTab Simulation )
                                             ] [str "Simulation"] ] )
-                            
+
                                     // Optional wavesim tab. If present contains waveforms or waveform editor window
                                     (match currWaveSimModel model with
                                     | Some {WSViewState=WSClosed} -> 

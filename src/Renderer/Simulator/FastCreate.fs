@@ -72,8 +72,15 @@ let getPortNumbers (sc: SimulationComponent) =
         | ROM1 _ 
         | AsyncROM1 _->
             1,1
+        | NbitsNot _ ->
+            1,1
         | MergeWires
+        | NbitsAnd _
+        | NbitsOr _
         | NbitsXor _
+        | NbitsNand _
+        | NbitsNor _
+        | NbitsXnor _
         | RegisterE _
         | DFFE -> 
             2,1
@@ -115,7 +122,13 @@ let getOutputWidths (sc: SimulationComponent) (wa: int option array) =
     | BusSelection (w, _)
     | Constant1 (w, _,_)
     | Constant (w,_)
-    | NbitsXor w -> putW0 w
+    | NbitsNot w
+    | NbitsAnd w
+    | NbitsOr w
+    | NbitsXor w
+    | NbitsNand w
+    | NbitsNor w
+    | NbitsXnor w -> putW0 w
     | NbitsAdder w ->
         putW0 w
         putW1 1

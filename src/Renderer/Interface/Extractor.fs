@@ -22,11 +22,11 @@ let extractReducedState (state : CanvasState) : CanvasState =
     comps, conns
 
 /// Are two lists of vertices identical
-let verticesAreSame tolerance (conns1:(float*float) list) (conns2: (float*float) list) =
+let verticesAreSame tolerance (conns1:Vertex list) (conns2: Vertex list) =
     let sq x = x*x
     conns1.Length = conns2.Length &&
     List.zip conns1 conns2
-    |> List.map (fun ((x1,y1),(x2,y2)) -> sq(x1-x2) + sq(y1-y2))
+    |> List.map (fun (startVertex, endVertex) -> sq(startVertex.X-endVertex.X) + sq(startVertex.Y-endVertex.Y))
     |> List.sum
     |> (fun d -> d < tolerance)
 
@@ -63,7 +63,7 @@ let compareCanvas
         (tolerance: float)
         ((comps1,conns1):CanvasState) 
         ((comps2,conns2):CanvasState) =
-    let reduce comps =
+    let reduce (comps: Component list) =
         comps
         |> List.toArray
         |> Array.map (fun comp -> {comp with H=0;W=0;X=0;Y=0})
