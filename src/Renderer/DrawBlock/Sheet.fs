@@ -562,7 +562,7 @@ type XOrY = IsX | IsY
 
 /// Helper function to create 1D static data for use by snapping functions based on 
 /// a single coordinate array of snap points.
-/// points: array of points to snap to
+/// points: array of points to snap to.
 /// limit: max distance from a snap point at which snap will happen.
 let makeSnapBounds 
         (limit:float) 
@@ -587,7 +587,7 @@ let makeSnapBounds
             DisplayLine = x.Display
         })
 
-/// Select X or Y coordinate based on value 
+/// Select X or Y coordinate of pos based on value of sel
 let toCoord (sel: XOrY) (pos: XYPos) =
     match sel with
     | IsX -> pos.X
@@ -601,7 +601,12 @@ let emptySnap: SnapXY =
         SnapY = emptyInfo
     }
 
-
+/// Map Component types to values which partition them into
+/// sets of components which should be treated as same type
+/// in snap operations. e.g. Input, Output, IOLabel are all
+/// treated as same.
+/// Usage: symbolMatch s1 = symbolMatch s2 // true if s1 and s2
+/// snap to each other.
 let symbolMatch (symbol: SymbolT.Symbol) =
     match symbol.Component.Type with
     | Input _ | Output _| IOLabel -> Input 0
@@ -628,8 +633,8 @@ let getNewSymbolSnapInfo
     /// xOrY: which coordinate is processed.
     /// create snap points on the centre of each other same type symbol
     /// this will align (same type) symbol centres with centres.
-    let movingSymbolMatch = symbolMatch movingSymbol
     let otherSimilarSymbolData (xOrY: XOrY) = 
+        let movingSymbolMatch = symbolMatch movingSymbol
         Map.values model.Wire.Symbol.Symbols 
         |> Seq.filter (fun (sym:SymbolT.Symbol) -> 
                             sym.Id <> movingSymbol.Id && symbolMatch sym = movingSymbolMatch)
@@ -706,7 +711,10 @@ let getNewSegmentSnapInfo
         (model: Model) 
         (movingSegment: BusWireT.ASegment) 
             : SnapXY =
+
+    /// Is seg Horizontal or Vertical? Returns None if segments is zero length
     let getDir (seg: BusWireT.ASegment) = BusWire.getSegmentOrientationOpt seg.Start seg.End
+
     let thisWire = model.Wire.Wires[movingSegment.Segment.WireId]
     let thisSegId = movingSegment.Segment.GetId()
     let orientation = getDir movingSegment
@@ -747,12 +755,15 @@ let snap1D
         (pos:{|MouseDelta:float; ActualPosition:float|}) 
         (snapI:SnapInfo) : SnapInfo * float  =
 
+    /// return the snap info if pos should be snapped to d, otehrwise None
     let mustSnap (pos: float) (d: SnapData) =
         if (not autoScrolling) && pos > d.LowerLimit && pos < d.UpperLimit then 
             Some {UnSnapPosition = pos; SnapPosition = d.Snap; SnapDisplay = d.DisplayLine}
         else
             None        
-
+    /// the position to which the symbol should move if it is unsnapped
+    /// based on the snap info snapI.
+    /// if no snap keep current position.
     let unSnapPosition = 
         snapI.SnapOpt
         |> Option.map (fun snap -> snap.UnSnapPosition)
