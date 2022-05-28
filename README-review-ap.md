@@ -1,4 +1,4 @@
-**File:** [SymbolUpdate.fs](src/renderer/DrawBlock/SymbolUpdate.fs) Lines 894-1066
+**File:** [SymbolUpdate.fs](https://github.com/tomcl/issie/blob/review-ap/src/Renderer/DrawBlock/SymbolUpdate.fs) Lines 894-1066
 
 **Context:** 
 
