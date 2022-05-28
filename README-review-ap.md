@@ -10,4 +10,4 @@
     - Find the target position of the port as it is being dragged (where the port will be placed if you un-press the mouse key)     
 
 <br><br>
-<img src="portMovement.gif" alt="portMovement" width="65%" height="65%"/>
+<img src="portMovement.gif" alt="portMovement" width="100%" height="100%"/>
