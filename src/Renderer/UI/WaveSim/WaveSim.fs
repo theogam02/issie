@@ -602,30 +602,12 @@ let viewWaveformsButton model dispatch =
     div [ Style [ Display DisplayOptions.Block ] ]
         [ Button.button viewButtonAction [str "View"] ]
 
-// let selectConns (model: Model)  (conns: ConnectionId list) (dispatch: Msg -> unit) =
-//     let allConns =
-//         snd <| model.Sheet.GetCanvasState()
-//         |> List.map (fun conn -> ConnectionId conn.Id)
-//         |> Set.ofList
-//     let otherConns = allConns - Set.ofList conns
-//     let sheetDispatch sMsg = dispatch (Sheet sMsg)
-//     model.Sheet.SelectConnections sheetDispatch true conns
-//     model.Sheet.SelectConnections sheetDispatch false (Set.toList otherConns)
-
 /// Sets all waves as selected or not selected depending on value of newState
 let toggleSelectAll newState model dispatch : unit =
     printf "toggle select all"
     let waveSimModel = model.WaveSim
-    let waves = Seq.toList (Map.values waveSimModel.AllWaves)
-    // let conns =
-    //     if newState then
-    //         waves
-    //         |> List.collect (fun wave -> wave.Conns)
-    //     else
-    //         []
     let allWaves' = Map.map (fun _ wave -> {wave with Selected = newState}) waveSimModel.AllWaves
     dispatch <| SetWSModel {waveSimModel with AllWaves = allWaves'}
-    // selectConns model conns dispatch
 
 let isWaveSelected (waveSimModel: WaveSimModel) (name: string) : bool =
     waveSimModel.AllWaves[name].Selected
@@ -654,17 +636,11 @@ let selectAll (model: Model) dispatch =
         ]
 
 let toggleConnsSelect (name: string) (waveSimModel: WaveSimModel) (dispatch: Msg -> unit) =
-    // let newState = not (isWaveSelected waveSimModel name)
-    printf "toggleConnsSelect"
     let wave = waveSimModel.AllWaves[name]
     let wave' = {wave with Selected = not wave.Selected}
-    // printf "%A" wave'
 
     let waveSimModel' = {waveSimModel with AllWaves = Map.add name wave' waveSimModel.AllWaves}
-    // printf "%A" waveSimModel'.AllWaves[name]
     dispatch <| SetWSModel waveSimModel'
-
-    // changeWaveSelection name model waveSimModel dispatch
 
 let checkboxAndNameRow (name: string) (model: Model) (dispatch: Msg -> unit) =
     let waveSimModel = model.WaveSim
@@ -675,7 +651,6 @@ let checkboxAndNameRow (name: string) (model: Model) (dispatch: Msg -> unit) =
             [FontWeight "Bold"]
         else
             []
-    // printf "checkboxAndName %A"  (str <| allWaves[name].DisplayName )
 
     tr  [
           Style [ VerticalAlign "middle" ; Height rowHeight]
@@ -697,11 +672,9 @@ let checkboxAndNameRow (name: string) (model: Model) (dispatch: Msg -> unit) =
         ]
 
 let checkboxListOfWaves (model: Model) (dispatch: Msg -> unit) =
-    // printf "checkboxListOfWaves"
     let waveSimModel = model.WaveSim
     Seq.toArray (Map.keys waveSimModel.AllWaves)
     |> Array.map (fun name -> checkboxAndNameRow name model dispatch)
-    // failwithf "checkboxListOfWaves not implemented"
 
 let selectWaves (model: Model) dispatch = 
     div [ Style [ Position PositionOptions.Relative
@@ -748,7 +721,6 @@ let private setClkCycle (wsModel: WaveSimModel) (dispatch: Msg -> unit) (newClkC
                     CurrClkCycle = newClkCycle'
                     ClkCycleBoxIsEmpty = false
                 }
-        // dispatch <| UpdateScrollPos true
     else
         dispatch <| InitiateWaveSimulation
             {wsModel with
@@ -756,8 +728,8 @@ let private setClkCycle (wsModel: WaveSimModel) (dispatch: Msg -> unit) (newClkC
                 StartCycle = newClkCycle' - (wsModel.ShownCycles - 1)
                 ClkCycleBoxIsEmpty = false
             }
-        // dispatch <| UpdateScrollPos true
 
+// TODO: Move to Constants module
 let zoomLevels = [|
 //   0     1     2    3     4     5    6    7    8    9    10   11    12   13   14   15
     0.25; 0.33; 0.5; 0.67; 0.75; 0.8; 0.9; 1.0; 1.1; 1.5; 1.75; 2.0; 2.50; 3.0; 4.0; 5.0;
@@ -886,32 +858,6 @@ let waveSimButtonsBar (model: Model) (dispatch: Msg -> unit) : ReactElement =
             clkCycleButtons model.WaveSim dispatch
             // TODO: zoomButtons
         ]
-
-// /// change the order of the waveforms in the simulator
-// let private moveWave (model:Model) (wSMod: WaveSimModel) up =
-//     let moveBy = if up then -1.5 else 1.5
-//     let addLastPort arr p =
-//         Array.mapi (fun i el -> if i <> Array.length arr - 1 then el
-//                                 else fst el, Array.append (snd el) [| p |]) arr
-//     let svgCache = wSMod.DispWaveSVGCache
-//     let movedNames =
-//         wSMod.SimParams.DispNames
-//         |> Array.map (fun name -> isWaveSelected model wSMod.AllWaves[name], name)
-//         |> Array.fold (fun (arr, prevSel) (sel,p) -> 
-//             match sel, prevSel with 
-//             | true, true -> addLastPort arr p, sel
-//             | s, _ -> Array.append arr [| s, [|p|] |], s ) ([||], false)
-//         |> fst
-//         |> Array.mapi (fun i (sel, ports) -> if sel
-//                                                then float i + moveBy, ports
-//                                                else float i, ports)
-//         |> Array.sortBy fst
-//         |> Array.collect snd 
-//     setDispNames movedNames wSMod
-//     |> SetWSModel
-
-let moveWave (wsModel: WaveSimModel) (direction: bool) (dispatch: Msg -> unit) : unit =
-    ()
 
 let nameRows (wsModel: WaveSimModel) : ReactElement list =
     selectedWaves wsModel
