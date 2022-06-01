@@ -19,19 +19,19 @@ type SnapData = {
     /// DisplayLine may not be the same as Snap because when two symbols snap together the
     /// displayed line must go through the centre of each symbol, whereas the TopLeft 
     /// coordinate is the one which is snapped
-    DisplayLine: float
+    IndicatorPos: float
     }
 
 /// Dynamic data used when a symbol is being snapped
 type Snap = {
     UnSnapPosition: float
     SnapPosition: float
-    SnapDisplay: float
+    SnapIndicatorPos: float
 }
 // lenses to access fields in above types
 let unSnapPositon_ = Lens.create (fun s -> s.UnSnapPosition) (fun u s -> {s with UnSnapPosition = u})
 let snapPosition_ = Lens.create (fun s -> s.SnapPosition) (fun u s -> {s with SnapPosition = u})
-let snapDisplay_ = Lens.create (fun s -> s.SnapDisplay) (fun u s -> {s with SnapDisplay = u})
+let snapIndicatorPos_ = Lens.create (fun s -> s.SnapIndicatorPos) (fun u s -> {s with SnapIndicatorPos = u})
 
 /// All the 1D data needed to manage snapping of a moving symbol
 type SnapInfo = {
