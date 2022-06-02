@@ -27,6 +27,8 @@ module Constants =
     let gatePortPosEdgeGap = 0.3
     let legendVertOffset = 16.
     let legendLineSpacingInPixels = 16.
+    let triangleApexHeight = 0.3
+    let portMovementDragMargin = 60.
 
     /// How large are component labels
     let labelFontSizeInPixels:float = 16 // otehr parameters scale correctly with this
