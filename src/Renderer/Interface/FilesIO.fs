@@ -507,6 +507,27 @@ let checkMemoryContents (projectPath:string) (comp: Component) : Component =
         | _ -> comp
     | _ -> comp
 
+
+let tryUpdateFromMemory  (mem: Memory1) (projectPath:string): Memory1 option =
+    match mem.Init with
+
+    | FromFile fName ->
+        let fPath = pathJoin [|projectPath ; (fName + ".ram")|]
+        let memData = readMemDefns mem.AddressWidth mem.WordWidth fPath
+        match memData with
+        | Ok memDat -> 
+            if memDat = mem.Data then
+                None
+            else
+                let mem = {mem with Data = memDat}
+                printfn "%s" $"RAM file {fPath} has changed so component is now different"
+                Some mem
+        | Error msg ->
+            printfn $"Error reloading memory from its file {fPath}:\n{msg}"
+            None // ignore errors for now
+    | _ -> None
+
+
 /// load a component from its canvas and other elements
 let makeLoadedComponentFromCanvasData (canvas: CanvasState) filePath timeStamp waveInfo (sheetInfo:SheetInfo option) =
     let projectPath = path.dirname filePath
@@ -636,6 +657,9 @@ let openWriteDialogAndWriteMemory mem path =
                 fpath
         writeMemDefns fpath' mem |> ignore
         Some fpath'
+
+let updateMemoryFromFile mem path =
+    tryUpdateFromMemory 
     
 
 

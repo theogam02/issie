@@ -165,6 +165,13 @@ let private makeMemoryInfo descr mem compId cType model dispatch =
                 br []; 
                 br [];
 
+                let buttonFn, buttonLegend =
+                    match mem with
+                    | FromData ->
+                        FilesIO.openWriteDialogAndWriteMemory
+                    | FromFile name ->
+                        FilesIO.
+
                 Button.button [
                     Button.Color IsPrimary
                     Button.OnClick (fun _ -> 
