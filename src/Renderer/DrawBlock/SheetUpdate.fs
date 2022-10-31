@@ -460,14 +460,22 @@ let update (msg : Msg) (model : Model): Model*Cmd<Msg> =
     | StartCompilationStage (stage, path, name, profile) ->
         printfn "are we compiling? %A" model.Compiling
         printfn "do we have process? %A" (model.CompilationProcess |> Option.map (fun c -> c.pid))
+        printfn "curr proj dir: %s" (Option.get model.ProjectDirectory)
         if not model.Compiling then
             model, Cmd.none
         else 
             let cwd = getCWD ()
+            let isMacos = Api.``process``.platform = Base.Darwin
             let include_path = 
                 match JSHelpers.debugLevel <> 0 with
                 |true -> cwd+"/static/hdl"
-                |false -> cwd+"/resources/static/hdl" 
+                |false -> 
+                    match isMacos with
+                    |false -> cwd+"/resources/static/hdl"
+                    |true -> 
+                        match model.ProjectDirectory with
+                        |Some dir -> dir+"/hdl"
+                        |None -> failwithf "Failed to identify current project directory"
             
             printfn "include_path: %s" include_path
 
@@ -787,6 +795,7 @@ let init () =
         DebugIsConnected = false
         DebugMappings = [||]
         DebugDevice = None
+        ProjectDirectory = None
     }, Cmd.none
 
 

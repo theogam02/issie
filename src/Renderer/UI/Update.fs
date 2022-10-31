@@ -737,7 +737,9 @@ let update (msg : Msg) oldModel =
         | TruthTable -> Cmd.batch <| editCmds
         | WaveSim -> Cmd.batch <| editCmds
     | ChangeBuildTabVisibility ->
-        {model with BuildVisible = (not <| model.BuildVisible)}, Cmd.none
+        let currProjDir = (Option.get model.CurrentProj).ProjectPath
+        let sheet' = {model.Sheet with ProjectDirectory = Some currProjDir}
+        {model with BuildVisible = (not <| model.BuildVisible); Sheet = sheet'}, Cmd.none
     | SetHighlighted (componentIds, connectionIds) ->
         let sModel, sCmd = SheetUpdate.update (SheetT.ColourSelection (componentIds, connectionIds, HighLightColor.Red)) model.Sheet
         {model with Sheet = sModel}, Cmd.map Sheet sCmd

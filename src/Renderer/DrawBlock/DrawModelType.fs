@@ -547,6 +547,7 @@ module SheetT =
         DebugMappings: string array
         DebugIsConnected: bool
         DebugDevice: string option
+        ProjectDirectory: string option
         }
     
     open Operators
