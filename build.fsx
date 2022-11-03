@@ -49,24 +49,24 @@ Target.create "CleanNode" <| fun _ ->
 Target.create "DotnetRestore" (fun _ ->
     Shell.Exec("dotnet","restore issie.sln") |> ignore)
 
-Target.create "NpmInstall" (fun _ ->
-  Npm.exec "ci" id
+Target.create "YarnInstall" (fun _ ->
+  Yarn.exec "install" id
 )
 
 Target.create "Build" (fun _ ->
-  Npm.run "compile" id
+  Yarn.exec "compile" id
 )
 
 Target.create "Dev" (fun _ ->
-  Npm.run "dev" id
+  Yarn.exec "dev" id
 )
 
 Target.create "Dist" (fun _ ->
-  Npm.run "dist" id
+  Yarn.exec "dist" id
 )
 
 Target.create "DistDir" (fun _ ->
-  Npm.run "dist:dir" id
+  Yarn.exec "dist:dir" id
 )
 
 Target.create "KillZombies" <| fun _ ->
@@ -84,16 +84,16 @@ Target.create "KillZombies" <| fun _ ->
 
 "CleanDev"
   ==> "DotnetRestore"
-  ==> "NpmInstall"
+  ==> "YarnInstall"
   ==> "Build"
 
-"NpmInstall"
+"YarnInstall"
   ==> "Dev"
 
-"NpmInstall"
+"YarnInstall"
   ==> "Dist"
 
-"NpmInstall"
+"YarnInstall"
   ==> "DistDir"
 
 "CleanFableJS"

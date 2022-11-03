@@ -217,11 +217,9 @@ NUGET
     Fake.IO.FileSystem (5.22)
       Fake.Core.String (>= 5.22) - restriction: >= netstandard2.0
       FSharp.Core (>= 6.0) - restriction: >= netstandard2.0
-    Fake.JavaScript.Npm (5.22)
+    Fake.JavaScript.Yarn (5.22)
       Fake.Core.Environment (>= 5.22) - restriction: >= netstandard2.0
       Fake.Core.Process (>= 5.22) - restriction: >= netstandard2.0
-      Fake.IO.FileSystem (>= 5.22) - restriction: >= netstandard2.0
-      Fake.Testing.Common (>= 5.22) - restriction: >= netstandard2.0
       FSharp.Core (>= 6.0) - restriction: >= netstandard2.0
     Fake.Net.Http (5.22) - restriction: >= netstandard2.0
       Fake.Core.Trace (>= 5.22) - restriction: >= netstandard2.0
