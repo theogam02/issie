@@ -789,6 +789,7 @@ end
 /// there are any.
 let getVerilog (vType: VMode) (fs: FastSimulation) (profile: CompilationProfile) =
     // make sure we have Ok names to use for output
+    printfn $"getVerilog"
     writeVerilogNames fs
     
     [| getInstantiatedModules fs

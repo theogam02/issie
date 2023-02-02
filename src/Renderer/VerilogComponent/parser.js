@@ -6,6 +6,7 @@ const verilogGrammar = require("./VerilogGrammar.js");
 // if parser fails it returns the error message provided by the nearley parser in a simple form
 export function parseFromFile(source) {
     try {
+        console.log("parseFromFile")
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(verilogGrammar));
         const sourceTrimmed = source.replace(/\s+$/g, '');
         const sourceTrimmedComments = sourceTrimmed.replace(/\/\/.*$/gm,' '); //\/\*[\s\S]*?\*\/|([^\\:]|^)
@@ -22,10 +23,11 @@ export function parseFromFile(source) {
         }
         linesIndex.push(sourceTrimmedComments.length)  
         const ast = results[0];
+        console.log(JSON.stringify(ast));
         return JSON.stringify({Result: JSON.stringify(ast), Error: null, NewLinesIndex: linesIndex});
     }
     catch(e) {
-        //console.log(e.message)
+        console.log(e.message)
         let token = e.token;
         let message = e.message;
         let lineCol = message.match(/[0-9]+/g)
@@ -34,7 +36,7 @@ export function parseFromFile(source) {
         let table = message.substring(message.indexOf(".") + 1);
         //let expectedKeywords = table.match(/assign|input|output|wire|parameter|endmodule/g);
         //let unique = expectedKeywords.filter((v, i, a) => a.indexOf(v) === i);
-
+        console.log(message);
         let checkForChars = false;
         let checkForEqual=false;
         let checkForKeyword=false

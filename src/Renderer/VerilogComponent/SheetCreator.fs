@@ -100,6 +100,7 @@ let createComponent (compType:ComponentType) (name:string) : Component =
     let id = DrawHelpers.uuid()
     let inputPorts = createPortList PortType.Input inputPortNo id
     let outputPorts = createPortList PortType.Output outputPortNo id
+    printfn $"createComponent {name}"
     
     createComponent' id compType name inputPorts outputPorts
 
@@ -605,5 +606,7 @@ let createSheet input =
             |> List.reduce (fun cs1 cs2 -> concatenateCanvasStates cs1 cs2)
             |> concatenateCanvasStates (collectInputAndWireComps ioAndWireToCompMap,[])
             |> fixCanvasState
+    printf "SheetCreator main (createSheet)"
+    printf $"{finalCanvasState}"
 
     finalCanvasState

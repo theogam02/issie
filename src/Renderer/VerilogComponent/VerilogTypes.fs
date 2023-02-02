@@ -46,12 +46,32 @@ type PrimaryT = {Type: string; PrimaryType: string; BitsStart: string option; Bi
 type ExpressionT = {Type: string; Operator: string option; Head: ExpressionT option; Tail: ExpressionT option; Unary: UnaryT option}
     and UnaryT = {Type: string; Primary: PrimaryT option; Number: NumberT option; Expression: ExpressionT option}
 
-type AssignmentLHST = {Type: string; PrimaryType: string; BitsStart: string option; BitsEnd: string option; Primary: IdentifierT}    
+type AssignmentLHST = {Type: string; PrimaryType: string; BitsStart: string option; BitsEnd: string option; Primary: IdentifierT}
 type AssignmentT = {Type: string; LHS: AssignmentLHST; RHS: ExpressionT}
 
-type StatementItemT = {Type: string; StatementType: string; Assignment : AssignmentT;}
+type ContinuousAssign = {Type: string; StatementType: string; Assignment : AssignmentT;} // need to add seq block, option statement array
 
-type ItemT = {Type: string; ItemType: string; IODecl: IOItemT option; ParamDecl: ParameterItemT option; Statement: StatementItemT option; Location: int}
+type NonBlockingAssignT = {Assignment: AssignmentT}
+
+type BlockingAssignT = {Operator: string; Assignment: AssignmentT}
+
+
+type SeqBlockT = {Type: string; Statements: StatementT array}
+
+and StatementT = {Type: string; StatementType: string; NonBlockingAssign: NonBlockingAssignT option; BlockingAssign: BlockingAssignT option; SeqBlock: SeqBlockT option; Conditional: ConditionalT option; CaseStatement: CaseStatementT option}
+
+and IfStatementT = {Type: string; Condition: ExpressionT; Statement: StatementT}
+
+and ConditionalT = {Type: string; IfStatements: IfStatementT array; ElseStatement: StatementT option}
+
+and CaseItemT = {Type: string; Expressions: ExpressionT array; Statement: StatementT}
+
+and CaseStatementT = {Type: string; Expression: ExpressionT; CaseItems: CaseItemT array; Default: StatementT option}
+
+
+type AlwaysConstructT = {Type: string; AlwaysType: string; Statement: StatementT;}
+
+type ItemT = {Type: string; ItemType: string; IODecl: IOItemT option; ParamDecl: ParameterItemT option; Statement: ContinuousAssign option; AlwaysConstruct: AlwaysConstructT option; Location: int}
 
 type ModuleItemsT = {Type : string; ItemList : ItemT array}
 

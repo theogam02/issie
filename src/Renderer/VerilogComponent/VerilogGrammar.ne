@@ -5,13 +5,13 @@
 ##############################################  SOURCE TEXT  ##################################################
 
 PROGRAM -> MODULE {%function(d) {return {Type: "program", Module: d[0]};} %}
-
+# _ for optional whitespace, __ for obligatory whitespace
 MODULE 
     -> _ "module" __ NAME_OF_MODULE _ "(" _ LIST_OF_PORTS:? _ ")" _ ";" _ MODULE_ITEMS _ endmodule _ {%function(d) {return {Type: "module_old", ModuleName: d[3], PortList: d[7], ModuleItems: d[13]};} %}
-    | _ "module" __ NAME_OF_MODULE _ "(" _ IO_ITEMS:? _ ")" _ ";" _ STATEMENTS _ endmodule _ {%function(d) {return {Type: "module_new", ModuleName: d[3], IOItems: d[7], ModuleItems: d[13]};} %}
+    | _ "module" __ NAME_OF_MODULE _ "(" _ IO_ITEMS:? _ ")" _ ";" _ NON_PORT_MODULE_ITEMS _ endmodule _ {%function(d) {return {Type: "module_new", ModuleName: d[3], IOItems: d[7], ModuleItems: d[13]};} %}
 
 NAME_OF_MODULE -> IDENTIFIER {% id %}
-
+ 
 LIST_OF_PORTS
     -> PORT _ "," _ LIST_OF_PORTS {%function(d, l, reject) {return {Type: "port_list", Head: d[0], Tail: d[4], Location: l};} %}
     | PORT {% function(d,l,reject) {return {Type: "port_list", Head: d[0], Tail: null, Location: l};}  %}
@@ -20,16 +20,22 @@ PORT -> IDENTIFIER {%function(d) {return {Type: "port", Port: d[0]};} %}
 
 MODULE_ITEMS -> MODULE_ITEM:* {%function(d) {return {Type: "module_items", ItemList: d[0]};} %}
 
+NON_PORT_MODULE_ITEMS -> NON_PORT_MODULE_ITEM:* {%function(d) {return {Type: "module_items", ItemList: d[0]};} %}
+
 MODULE_ITEM
-    -> INPUT_DECL ";" _ {%function(d,l, reject) {return {Type: "item", ItemType: "input_decl", IODecl: d[0], ParamDecl: null, Statement: null, Location: l};} %}
+    -> INPUT_DECL {%function(d,l, reject) {return {Type: "item", ItemType: "input_decl", IODecl: d[0], ParamDecl: null, Statement: null, Location: l};} %}
     | OUTPUT_DECL ";" _ {%function(d,l, reject) {return {Type: "item", ItemType: "output_decl", IODecl: d[0], ParamDecl: null, Statement: null, Location: l};} %}
-    | STATEMENT _ {%function(d,l, reject) {return {Type: "item", ItemType: "statement", IODecl: null, ParamDecl: null, Statement: d[0], Location: l};} %}
-    | "wire" __ EVERYTHING {%function(d,l, reject) {return {Type: "WIRE-DECL", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
-    | "reg" __ EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
-    | "always" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
-    | "always_comb" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
-    | "initial" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
-    | "case" EVERYTHING {%function(d,l, reject) {return {Type: "NO-CASE", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
+    | NON_PORT_MODULE_ITEM {% id %} #?
+
+NON_PORT_MODULE_ITEM
+   -> CONTINUOUS_ASSIGNMENT _ {%function(d,l, reject) {return {Type: "item", ItemType: "statement", IODecl: null, ParamDecl: null, Statement: d[0], AlwaysConstruct: null, Location: l};} %}
+    | ALWAYS_CONSTRUCT {%function(d,l, reject) {return {Type: "item", ItemType: "always_construct", IODecl: null, ParamDecl: null, Statement: null, AlwaysConstruct: d[0], Location: l};} %}
+    | "wire" __ EVERYTHING {%function(d,l, reject) {return {Type: "WIRE-DECL", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, AlwaysConstruct: null, Location: l};} %}
+    | "reg" __ EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null,  AlwaysConstruct: null, Location: l};} %}
+    # | "always" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
+    #| "always_comb" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null, Location: l};} %}
+    | "initial" EVERYTHING {%function(d,l, reject) {return {Type: "NO-COMB", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null,  AlwaysConstruct: null, Location: l};} %}
+    | "case" EVERYTHING {%function(d,l, reject) {return {Type: "NO-CASE", ItemType: d[0], IODecl: null, ParamDecl: null, Statement: null,  AlwaysConstruct: null, Location: l};} %}
 
 IO_ITEMS 
     -> IO_ITEM _ "," _ IO_ITEMS {%function(d) {return {Type: "io_items", Head: d[0], Tail: d[4]};} %}
@@ -61,13 +67,116 @@ RANGE -> "[" UNSIGNED_NUMBER ":" UNSIGNED_NUMBER "]" {%function(d,l,reject) {ret
 
 ######################################     BEHAVIORAL STATEMENTS    #############################################
 
+### PROCEDURAL BLOCKS AND ASSIGNMENTS
+
+#initial_construct -> "initial" statement_or_null #maybe dont need it
+ALWAYS_CONSTRUCT -> ALWAYS_KEYWORD __ STATEMENT {%function(d) {return {Type: "always_construct", AlwaysType: d[0], Statement: d[2]};} %}
+
+ALWAYS_KEYWORD -> "always" {% id %} | "always_comb" {% id %} | "always_latch" {% id %} | "always_ff" {% id %} #remove latch and maybe basic
+#final_construct -> "final" function_statement # maybe dont need it
+
+BLOCKING_ASSIGNMENT ->
+    # VARIABLE_LVALUE "=" EXPRESSION {%function(d) {return {Type: "blocking_assignment", LHS: d[0]}, RHS: d[2];} %}# dont need delay DELAY_OR_EVENT_CONTROL
+    #| NONRANGE_VARIABLE_LVALUE "=" DYNAMIC_ARRAY_NEW #probs dont need it
+    # | [ implicit_class_handle . | class_scope | package_scope ] hierarchical_variable_identifier #figure out what this is
+    #select = class_new
+    OPERATOR_ASSIGNMENT {%function(d) {return {Type: "blocking_assignment", Operator: d[0].Operator, Assignment: d[0].Assignment};} %}
+
+OPERATOR_ASSIGNMENT -> VARIABLE_LVALUE _ ASSIGNMENT_OPERATOR _ EXPRESSION 
+    {%function(d) {return {Type: "operator_assignment", Operator: d[2], Assignment: {Type: "assignment", LHS: d[0], RHS: d[4]}};} %}
+
+ASSIGNMENT_OPERATOR ->
+    "=" {% id %}| "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>=" | "<<<=" | ">>>=" {% id %}
+
+NONBLOCKING_ASSIGNMENT ->
+    VARIABLE_LVALUE _ "<=" _ EXPRESSION #don't need delay or event control [ delay_or_event_control ]
+    {%function(d) {return {Type: "nonblocking_assignment", Assignment: {Type: "assign", LHS: d[0], RHS: d[4]}};} %}
+
+#PROCEDURAL_CONTINUOUS_ASSIGNMENT ->
+    #"assign" VARIABLE_ASSIGNMENT
+    #| deassign variable_lvalue
+    #| force variable_assignment
+    #| force net_assignment
+    #| release variable_lvalue
+    #| release net_lvalue
+
+#VARIABLE_ASSIGNMENT -> VARIABLE_LVALUE "=" EXPRESSION
+
+VARIABLE_LVALUE -> L_VALUE {% id %}
+
+#need multiple statements not just one
+SEQ_BLOCK
+    -> "begin" __ SEQ_BLOCK_STMTS _ "end" __ {% function(d) {return{Type: "seq_block", Statements: d[2]}; } %}# not sure if this is correct
+
+SEQ_BLOCK_STMTS -> STATEMENT:+ {% function(d) {return d[0]}%}
+
+CONDITIONAL_STATEMENT ->
+    IF ELSE_IF:* ELSE:? {%function(d) {[d[0]].concat(d[1]); return {Type: "cond_stmt", IfStatements: d[1], ElseStatement: d[2]}}%}
+
+# this might be ambiguous grammar? I want to have it this way because code gen should be easier maybe
+IF -> "if" _ "(" EXPRESSION ")" _ STATEMENT {% function(d) {return {Type: "ifstmt", Condition: d[3], Statement: d[6]}; } %}
+ELSE_IF -> "else" __ "if" _ "(" EXPRESSION ")" _ STATEMENT {% function(d) {return {Condition: d[5], Statement: d[8]}; } %}
+ELSE -> "else" __ STATEMENT {% function(d) {return d[2]; } %}
+
 STATEMENT
+    -> NONBLOCKING_ASSIGNMENT _ ";" _ {%function(d) {return {Type: "statement", StatementType: "nonblocking_assignment", NonBlockingAssign: d[0], BlockingAssign: null, SeqBlock: null, Conditional: null, CaseStatement: null};} %}
+    | BLOCKING_ASSIGNMENT _ ";" _ {%function(d) {return {Type: "statement", StatementType: "blocking_assignment", NonBlockingAssign: null, BlockingAssign: d[0], SeqBlock: null, Conditional: null,  CaseStatement: null};} %}
+    | SEQ_BLOCK _ {%function(d) {return {Type: "statement", StatementType: "seq_block", NonBlockingAssign: null, BlockingAssign: null, SeqBlock: d[0], Conditional: null,  CaseStatement: null};} %} #change to statements?
+    | CONDITIONAL_STATEMENT _ {%function(d){return {Type: "statement", StatementType: "conditional", NonBlockingAssign: null, BlockingAssign: null, SeqBlock: null, Conditional: d[0],  CaseStatement: null};}%}
+    | CASE_STATEMENT _ {%function(d){return {Type: "statement", StatementType: "case_stmt", NonBlockingAssign: null, BlockingAssign: null, SeqBlock: null, Conditional: null,  CaseStatement: d[0]};}%}
+
+
+################# CASE STATEMENTS ###################
+CASE_STATEMENT # probs only care about first one
+    -> "case" _ "(" _ EXPRESSION _ ")" _ (CASE_ITEM {% id %}):+ _ DEFAULT:? "endcase" __ {%function(d) { return {Type: "case_stmt", Expression: d[4], CaseItems: d[8], Default: d[10]};}%}
+    #| CASE_KEYWORD (case_expression ) "matches" case_pattern_item { case_pattern_item } endcase
+    #|  "case" ( case_expression ) "inside"
+    #   case_inside_item { case_inside_item } endcase
+
+
+# for clarity default should be last
+DEFAULT
+    -> "default" _ ":" _ STATEMENT _ {% function(d){return d[4];}%}
+CASE_ITEM
+    -> EXPRESSION  _ ("," _ EXPRESSION {%function(d){return d[2];}%}):* _ ":" _ STATEMENT _
+        {% function(d) {expr = [d[0]].concat(d[2]); return {Type: "case_item", Expressions: expr, Statement: d[6]};}%}
+    #| default [ : ] statement_or_null
+
+# case_pattern_item ::=
+#     pattern [ &&& expression ] : statement_or_null
+#     | default [ : ] statement_or_null
+# case_inside_item ::=
+#     open_range_list : statement_or_null
+#     | default [ : ] statement_or_null
+
+
+# PROCEDURAL_TIMING_CONTROL_STATEMENT
+#     -> PROCEDURAL_TIMING_CONTROL _ STATEMENT {% %}
+
+# EDGE_IDENTIFIER -> "posedge" | "negedge" | "edge"
+
+# EVENT_EXPRESSION
+#     -> EDGE_IDENTIFIER:? EXPRESSION ("iff" __ EXPRESSION):?
+#     #| sequence_instance [ iff expression ] # check what this is!
+#     | EVENT_EXPRESSION _ "or" _ EVENT_EXPRESSION
+#     | EVENT_EXPRESSION _ "," _ EVENT_EXPRESSION
+#     | "(" _ EVENT_EXPRESSION _ ")"
+
+# PROCEDURAL_TIMING_CONTROL
+#     -> "@" IDENTIFIER  #hierarchical_event_identifier
+#     | "@" _ "(" EVENT_EXPRESSION ")"
+#     | "@" _ "*"
+#     | "@" _ "(" _ "*" _ ")"
+#     #| "@" ps_or_hierarchical_sequence_identifier
+
+
+CONTINUOUS_ASSIGNMENT
     -> assign __ ASSIGNMENT _ ";" {%function(d) {return {Type: "statement", StatementType: "assign", Assignment: d[2]};} %}
     | wire __ WIRE_ASSIGNMENT _ ";" {%function(d) {return {Type: "statement", StatementType: "wire", Assignment: d[2]};} %}
 
 ASSIGNMENT -> L_VALUE _ "=" _ EXPRESSION {%function(d) {return {Type: "assign", LHS: d[0], RHS: d[4]};} %}
 
-WIRE_ASSIGNMENT -> WIRE_L_VALUE _ "=" _ EXPRESSION {%function(d) {return {Type: "wire", LHS: d[0], RHS: d[4]};} %}    
+WIRE_ASSIGNMENT -> WIRE_L_VALUE _ "=" _ EXPRESSION {%function(d) {return {Type: "wire", LHS: d[0], RHS: d[4]};} %} 
 
 ###########################################      EXPRESSIONS      ###############################################
 

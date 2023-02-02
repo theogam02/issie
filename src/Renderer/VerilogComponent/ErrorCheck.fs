@@ -152,14 +152,26 @@ let checkIODeclarations
     
     let portList = ast.Module.PortList |> Array.toList
     let assignments = List.filter (fun item -> (Option.isSome item.Statement)) items
-
+    // need to get assignments from always blocks
+    let blocking_assignments = // want type assignment
+        items
+        |> List.filter (fun item -> (Option.isSome item.AlwaysConstruct))
+        |> List.filter (fun item -> (Option.isSome ((Option.get item.AlwaysConstruct).Statement.BlockingAssign )))
+        |> List.map (fun item -> (Option.get (Option.get item.AlwaysConstruct).Statement.BlockingAssign).Assignment.RHS)
     let allPrimariesUsed =
-        assignments
-        |> List.map (fun x -> 
-            primariesUsedInAssignment [] (Option.get x.Statement).Assignment.RHS
-        )
-        |> List.concat
-        |> List.map (fun primary -> primary.Primary.Name)
+        let cont =
+            assignments
+            |> List.map (fun x -> 
+                primariesUsedInAssignment [] (Option.get x.Statement).Assignment.RHS
+            )
+            |> List.concat
+            |> List.map (fun primary -> primary.Primary.Name)
+        let blocking =
+            blocking_assignments
+            |> List.map (primariesUsedInAssignment [])
+            |> List.concat
+            |> List.map (fun primary -> primary.Primary.Name)
+        List.append cont blocking
 
 
     portWidthDeclarationMap
@@ -293,7 +305,14 @@ let checkAllOutputsAssigned
                 match x.Statement with
                 | Some statement when statement.StatementType = "assign" -> [statement.Assignment.LHS]
                 | _ -> []
-            | true -> []
+            | true -> 
+                match x.AlwaysConstruct with
+                | Some alwaysConstruct ->
+                    match alwaysConstruct.Statement.StatementType with
+                    | "blocking_assignment" -> [(Option.get alwaysConstruct.Statement.BlockingAssign).Assignment.LHS] 
+                    | "nonblocking_assignment" -> []
+                    | _ -> []
+                | _ -> []
         )
         |> List.map (fun assignment ->
             match assignment with
@@ -1051,7 +1070,7 @@ let getWireLocationMap items =
 /// Main error-finder function
 /// Returns a list of errors (type ErrorInfo)
 let getSemanticErrors ast linesLocations (origin:CodeEditorOpen) (project:Project) =
-    
+    printfn $"getSemanticErrors"
     let (items: ItemT list) = ast.Module.ModuleItems.ItemList |> Array.toList
     ///////// STATIC MAPS, LISTS NEEDED  ////////////////
     let portMap  = getPortMap items

@@ -578,8 +578,9 @@ let rec createVerilogPopup model showExtraErrors correctedCode moduleName (origi
                 match writeFile path code with
                 | Ok _ -> ()
                 | Error _ -> failwithf "Writing verilog file FAILED"
-                
+
                 let parsedCodeNearley = parseFromFile(code)
+                printfn $"{parsedCodeNearley}"
                 let output = Json.parseAs<ParserOutput> parsedCodeNearley
                 let result = Option.get output.Result
                 let fixedAST = fix result
