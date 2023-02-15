@@ -111,7 +111,7 @@ SEQ_BLOCK
 SEQ_BLOCK_STMTS -> STATEMENT:+ {% function(d) {return d[0]}%}
 
 CONDITIONAL_STATEMENT ->
-    IF ELSE_IF:* ELSE:? {%function(d) {[d[0]].concat(d[1]); return {Type: "cond_stmt", IfStatements: d[1], ElseStatement: d[2]}}%}
+    IF ELSE_IF:* ELSE:? {%function(d) {if_statements=[d[0]].concat(d[1]); return {Type: "cond_stmt", IfStatements: if_statements, ElseStatement: d[2]}}%}
 
 # this might be ambiguous grammar? I want to have it this way because code gen should be easier maybe
 IF -> "if" _ "(" EXPRESSION ")" _ STATEMENT {% function(d) {return {Type: "ifstmt", Condition: d[3], Statement: d[6]}; } %}

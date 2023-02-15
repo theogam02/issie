@@ -49,7 +49,7 @@ type ExpressionT = {Type: string; Operator: string option; Head: ExpressionT opt
 type AssignmentLHST = {Type: string; PrimaryType: string; BitsStart: string option; BitsEnd: string option; Primary: IdentifierT}
 type AssignmentT = {Type: string; LHS: AssignmentLHST; RHS: ExpressionT}
 
-type ContinuousAssign = {Type: string; StatementType: string; Assignment : AssignmentT;} // need to add seq block, option statement array
+type ContinuousAssignT = {Type: string; StatementType: string; Assignment : AssignmentT;} // need to add seq block, option statement array
 
 type NonBlockingAssignT = {Assignment: AssignmentT}
 
@@ -71,7 +71,7 @@ and CaseStatementT = {Type: string; Expression: ExpressionT; CaseItems: CaseItem
 
 type AlwaysConstructT = {Type: string; AlwaysType: string; Statement: StatementT;}
 
-type ItemT = {Type: string; ItemType: string; IODecl: IOItemT option; ParamDecl: ParameterItemT option; Statement: ContinuousAssign option; AlwaysConstruct: AlwaysConstructT option; Location: int}
+type ItemT = {Type: string; ItemType: string; IODecl: IOItemT option; ParamDecl: ParameterItemT option; Statement: ContinuousAssignT option; AlwaysConstruct: AlwaysConstructT option; Location: int}
 
 type ModuleItemsT = {Type : string; ItemList : ItemT array}
 

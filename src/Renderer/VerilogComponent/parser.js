@@ -10,24 +10,32 @@ export function parseFromFile(source) {
         const parser = new nearley.Parser(nearley.Grammar.fromCompiled(verilogGrammar));
         const sourceTrimmed = source.replace(/\s+$/g, '');
         const sourceTrimmedComments = sourceTrimmed.replace(/\/\/.*$/gm,' '); //\/\*[\s\S]*?\*\/|([^\\:]|^)
-        // console.log(sourceTrimmedComments);
+        //console.log(sourceTrimmedComments);
         parser.feed(sourceTrimmedComments);
         let results = parser.results;
+
         
-        let lines = sourceTrimmedComments.split(/\n/); 
+        let lines = sourceTrimmedComments.split(/\n/);
+
+        if(!results.length){
+            let jsonobj = {Line: parseInt(lines.length), Col: parseInt(0), Length: 2, Message: `Unexpected end of input`};
+            return JSON.stringify({Result: null, NewLinesIndex: null, Error: JSON.stringify(jsonobj)});
+        }
+
         let linesIndex = [0];
         let count=0;
         for(let i=0;i<lines.length-1;i++){
             linesIndex.push(lines[i].length+1+count);
             count = lines[i].length+1+count;
         }
-        linesIndex.push(sourceTrimmedComments.length)  
+        linesIndex.push(sourceTrimmedComments.length) 
         const ast = results[0];
-        console.log(JSON.stringify(ast));
+        console.log(results.length);
+        console.log(ast);
         return JSON.stringify({Result: JSON.stringify(ast), Error: null, NewLinesIndex: linesIndex});
     }
     catch(e) {
-        console.log(e.message)
+        //console.log(e.message)
         let token = e.token;
         let message = e.message;
         let lineCol = message.match(/[0-9]+/g)
@@ -77,7 +85,7 @@ export function parseFromFile(source) {
             }
         }
         if(checkForChars){
-            expected.unshift('assign', 'wire', 'endmodule');  //,'input','output'
+            expected.unshift('assign', 'wire', 'endmodule', 'always_comb', 'always_ff');  //,'input','output'
         }
         if(checkForEqual){
             expected = ['"="']

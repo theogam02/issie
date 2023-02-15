@@ -104,7 +104,7 @@ var grammar = {
     {"name": "CONDITIONAL_STATEMENT$ebnf$1", "symbols": ["CONDITIONAL_STATEMENT$ebnf$1", "ELSE_IF"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "CONDITIONAL_STATEMENT$ebnf$2", "symbols": ["ELSE"], "postprocess": id},
     {"name": "CONDITIONAL_STATEMENT$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "CONDITIONAL_STATEMENT", "symbols": ["IF", "CONDITIONAL_STATEMENT$ebnf$1", "CONDITIONAL_STATEMENT$ebnf$2"], "postprocess": function(d) {[d[0]].concat(d[1]); return {Type: "cond_stmt", IfStatements: d[1], ElseStatement: d[2]}}},
+    {"name": "CONDITIONAL_STATEMENT", "symbols": ["IF", "CONDITIONAL_STATEMENT$ebnf$1", "CONDITIONAL_STATEMENT$ebnf$2"], "postprocess": function(d) {if_statements=[d[0]].concat(d[1]); return {Type: "cond_stmt", IfStatements: if_statements, ElseStatement: d[2]}}},
     {"name": "IF$string$1", "symbols": [{"literal":"i"}, {"literal":"f"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "IF", "symbols": ["IF$string$1", "_", {"literal":"("}, "EXPRESSION", {"literal":")"}, "_", "STATEMENT"], "postprocess": function(d) {return {Type: "ifstmt", Condition: d[3], Statement: d[6]}; }},
     {"name": "ELSE_IF$string$1", "symbols": [{"literal":"e"}, {"literal":"l"}, {"literal":"s"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},

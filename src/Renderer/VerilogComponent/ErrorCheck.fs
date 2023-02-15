@@ -2,7 +2,8 @@ module ErrorCheck
 
 open VerilogTypes
 open Fable.Core.JsInterop
-open CommonTypes 
+open CommonTypes
+open VerilogTypesNew
 
 let private getFileInProject (name:string) project = project.LoadedComponents |> List.tryFind (fun comp -> comp.Name.ToUpper() = name.ToUpper())
 
@@ -151,28 +152,27 @@ let checkIODeclarations
         : ErrorInfo list = 
     
     let portList = ast.Module.PortList |> Array.toList
-    let assignments = List.filter (fun item -> (Option.isSome item.Statement)) items
-    // need to get assignments from always blocks
-    let blocking_assignments = // want type assignment
-        items
-        |> List.filter (fun item -> (Option.isSome item.AlwaysConstruct))
-        |> List.filter (fun item -> (Option.isSome ((Option.get item.AlwaysConstruct).Statement.BlockingAssign )))
-        |> List.map (fun item -> (Option.get (Option.get item.AlwaysConstruct).Statement.BlockingAssign).Assignment.RHS)
-    let allPrimariesUsed =
-        let cont =
-            assignments
-            |> List.map (fun x -> 
-                primariesUsedInAssignment [] (Option.get x.Statement).Assignment.RHS
-            )
-            |> List.concat
-            |> List.map (fun primary -> primary.Primary.Name)
-        let blocking =
-            blocking_assignments
-            |> List.map (primariesUsedInAssignment [])
-            |> List.concat
-            |> List.map (fun primary -> primary.Primary.Name)
-        List.append cont blocking
 
+    let assignments = 
+        items
+        |> List.map (fun item -> Item(item))
+        |> List.fold getAllAssignments [] 
+
+    let allPrimariesUsed =
+        assignments
+        |> List.map (fun assignment -> primariesUsedInAssignment [] assignment.RHS)
+        |> List.concat
+        |> List.map (fun primary -> primary.Primary.Name)
+    // get variables from other expressions too
+    let PrimariesUsedExpr =
+        items
+        |> List.map (fun item -> Item(item))
+        |> List.fold getAllExpressions []
+        |> List.map (fun expr -> primariesUsedInAssignment [] expr)
+        |> List.concat
+        |> List.map (fun primary -> primary.Primary.Name)
+    
+    let allPrimariesUsed' = allPrimariesUsed @ PrimariesUsedExpr
 
     portWidthDeclarationMap
     |> Map.toList
@@ -298,22 +298,9 @@ let checkAllOutputsAssigned
     // List of assignments in the form of (port name, BitsStart, BitsEnd)
     let assignments = 
         ast.Module.ModuleItems.ItemList
-        |> Array.toList 
-        |> List.collect (fun x -> 
-            match (x.Statement |> isNullOrUndefined) with
-            | false -> 
-                match x.Statement with
-                | Some statement when statement.StatementType = "assign" -> [statement.Assignment.LHS]
-                | _ -> []
-            | true -> 
-                match x.AlwaysConstruct with
-                | Some alwaysConstruct ->
-                    match alwaysConstruct.Statement.StatementType with
-                    | "blocking_assignment" -> [(Option.get alwaysConstruct.Statement.BlockingAssign).Assignment.LHS] 
-                    | "nonblocking_assignment" -> []
-                    | _ -> []
-                | _ -> []
-        )
+        |> Array.map (fun item -> Item(item))
+        |> Array.fold getAllAssignments [] 
+        |> List.map (fun assignment -> assignment.LHS)
         |> List.map (fun assignment ->
             match assignment with
             | a when isNullOrUndefined assignment.BitsStart -> (a.Primary.Name,-1,-1)
@@ -361,7 +348,7 @@ let checkAllOutputsAssigned
                 |Unassigned ->
                     [|
                         {Text=sprintf "The following ports are declared but not assigned: %A" fullNames;Copy=false;Replace=NoReplace};
-                        {Text=sprintf "assign %s = 1'b0;" fullNames[0];Copy=true;Replace=Assignment}
+                        {Text=sprintf "assign %s = 1'b0;" fullNames[0];Copy=true;Replace=ReplaceType.Assignment}
                     |]
                 |DoubleAssignment ->
                     [|
@@ -638,7 +625,7 @@ let checkWiresAndAssignments
                         let extraMessages = 
                             [|
                                 {Text=(sprintf "Variable: '%s' is defined as" name)+definition+"\nTherefore,"+usedWidth+"is invalid" ; Copy=false;Replace=NoReplace}
-                                {Text=sprintf "assign %s = 0;"name; Copy=true;Replace=Assignment}
+                                {Text=sprintf "assign %s = 0;"name; Copy=true;Replace=ReplaceType.Assignment}
                             |]
                         List.append 
                             localErrors 
