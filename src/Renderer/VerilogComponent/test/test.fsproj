@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="../NearleyBindings.fs" />
+        <Compile Include="testParser.fs" /> 
+    </ItemGroup>
+    <ItemGroup>
+        <!-- List your package references here if you don't use Paket -->
+        <PackageReference Include="Fable.Core" />
+    </ItemGroup>
+</Project>

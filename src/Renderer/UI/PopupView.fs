@@ -42,7 +42,7 @@ module PopupView
 
 
 //====================================================================//
-
+open EEExtensions
 open Fulma
 open Fulma.Extensions.Wikiki
 open VerilogTypes
@@ -137,7 +137,7 @@ let openInBrowser url =
 let extractLabelBase (text:string) : string =
     text.ToUpper()
     |> Seq.takeWhile (fun ch -> ch <> '(')
-    |> Seq.filter (fun ch -> System.Char.IsLetterOrDigit ch || ch = '_')
+    |> Seq.filter Char.IsLetterOrDigitOrUnderscore
     |> Seq.map (fun ch -> ch.ToString())
     |> String.concat ""
 
@@ -162,9 +162,13 @@ let formatLabel (comp:Component) (text:string) =
 let setComponentLabel model (sheetDispatch) (comp:Component) (text:string) =
     // let label = formatLabel comp text
     let label = text.ToUpper() // TODO
-
     model.Sheet.ChangeLabel sheetDispatch (ComponentId comp.Id) label
-    //model.Diagram.EditComponentLabel comp.Id label
+    match comp.Type with
+    | IOLabel ->
+        // need to redo bus width inference after IoLabel component change because this cabn alter circuit correctness
+        let busWireDispatch bMsg = sheetDispatch (DrawModelType.SheetT.Msg.Wire bMsg)
+        busWireDispatch DrawModelType.BusWireT.Msg.BusWidths
+    | _ -> ()
 
 
 
@@ -307,9 +311,7 @@ let dialogPopupBodyOnlyText before placeholder dispatch =
     fun (dialogData : PopupDialogData) ->
         let goodLabel =
                 getText dialogData
-                |> Seq.toList
-                |> List.tryHead
-                |> function | Some ch when  System.Char.IsLetter ch -> true | Some ch -> false | None -> true
+                |> (fun s -> String.startsWithLetter s || s = "")
         div [] [
             before dialogData
             Input.text [
@@ -343,9 +345,7 @@ let dialogVerilogCompBody before moduleName errorDiv errorList showExtraErrors c
         let linesNo = code |> String.filter (fun ch->ch='\n') |> String.length
         let goodLabel =
                 (Option.defaultValue "" moduleName)
-                |> Seq.toList
-                |> List.tryHead
-                |> function | Some ch when  System.Char.IsLetter ch -> true | Some ch -> false | None -> true
+                |> (fun s -> String.startsWithLetter s || s = "")
         
         let renderCERSC =
             ofType<CodeEditorReactStatefulComponent,_,_> {CurrentCode=code; ReplaceCode=codeToAdd; Dispatch=dispatch; DialogData=dialogData;Compile=compileButton} 
@@ -487,9 +487,7 @@ let dialogPopupBodyTextAndInt beforeText placeholder beforeInt intDefault dispat
     fun (dialogData : PopupDialogData) ->
         let goodLabel =
                 getText dialogData
-                |> Seq.toList
-                |> List.tryHead
-                |> function | Some ch when  System.Char.IsLetter ch -> true | Some ch -> false | None -> true
+                |> (fun s -> String.startsWithLetter s || s = "")
         div [] [
             beforeText dialogData
             Input.text [
@@ -1022,41 +1020,40 @@ let viewWaveInfoPopup dispatch =
     let title = "How to Use the Waveform Viewer"
 
     let waveInfo = div [] [
-        makeH "Wave and RAM Selection"
+        makeH "Waveform and RAM Selection"
         ul [Style [ListStyle "disc"; MarginLeft "30px"]] [
             li [] [str "The waveform viewer can view signals on"; bSpan  " any sheet"; str " in the design being simulated."]
          
-            li [] [str "Use 'select waves' window to select which waveforms are viewed. The filter box allows ports to be selected by name. \
-                       Expand groups to explore design and find ports."]
+            li [] [str "Use 'select waves' window to select which waveforms are viewed. The search box allows them to be selected by part of name. \
+                       Alternatively, expand groups to explore design and find components and ports."]
                     
             li [] [str "The waveforms you view can be changed whenever the simulation is running. It is good practice to \
-                        keep only the ones you need at any time."]
-            li [] [str "RAMs and ROMs can be viewed showing contents in the current (cursor) cycle, and showing reads and writes."]
+                        delete waveforms you are not using, and order waveforms logically."]
+            li [] [str "Use 'select RAM' to view RAMs showing contents, read and write location, in the current (cursor) cycle."]
             li [] [str "Selected waveforms are preserved from one simulation to the next."]
         ]
 
-        makeH "Waveforms"
+        makeH "Waveform Operations"
         ul [Style [ListStyle "disc"; MarginLeft "30px"]] [
-            li [] [str "Hover mouse over a waveform name in the viewer to see the it highlighted on the current sheet."]
+            li [] [ str "Hover mouse over a waveform name in the viewer to see it highlighted if it is on the current sheet."]
             li [] [ str "Change sheet to view or alter components on subsheets."]
-            li [] [ str "Drag names to reorder waveforms, use delete icon to delete, use wave select to make large changes."]
+            li [] [ str "Drag names to reorder waveforms, use delete icon to delete, use 'select waves' to add."]
      
-            li [] [ str "Use cursor and zoom controls at any time to show which cycles to display. \
-                        This setting will be preserved from one simulation to the next."]
-            li [] [str "The cursor current cycle is greyed and can be moved by clicking the the waveforms, \
+            li [] [ str "Use cursor and zoom controls at any time to show which cycles to display."]
+            li [] [ str "The cursor current cycle is greyed and can be moved by clicking the the waveforms, \
                         altering the number in the cursor box, or clicking arrows."]
+            li [] [ str "Drag the grey divider to alter space used by waveforms"]
         ]
         makeH "Miscellaneous"
         ul [Style [ListStyle "disc"; MarginLeft "30px"]] [
             li [] [str "During a simulation you can move to any sheet and view or edit the design. \
-                       If the design changes a button will appear allowing you to simulate \
-                       the newer design, this will work even if you have edited a subsheet. \
-                       You can move the grey bar to give the waveforms more or less room."] 
-            li [] [str "You can set default values for inputs in properties boxes. \
-                       The main sheet inputs to the simulation are given these values throughout the simulation. \
-                       Components can be edited during a simulation and the new values will appear when the simulation is refreshed."]
-            li [] [str "The waveform radix can be changed. When waveforms are too small to fit binary this will be automatically changed to hex. \
-                        Numeric values not dispalyed with waveform can be viewed using the cursor and the righthand panel."]
+                       When any part of the design, or linked memory contents files, changes the green update button will be enabled allowing \
+                       update to the newer design."] 
+            li [] [str "You can change default values for sheet inputs in Input component property boxes. \
+                       The top sheet inputs of the simulation are given these values throughout the simulation. \
+                       Adjustable values anywhere else in the design can be implemented using constants."]
+            li [] [str "The waveform radix can be changed. When waveforms are too small to fit binary this will be changed to hex. \
+                        Numeric values not displayed on the waveform can be viewed using the cursor and the righthand panel."]
         ]
     ]
 
@@ -1119,8 +1116,8 @@ let fileEntryBox files fName dialog dispatch =
     let inputValidate text =
         (text = "" || 
         List.exists ((=) text) files || 
-        not (Seq.forall System.Char.IsLetterOrDigit (text)) || 
-        not (System.Char.IsLetter (char text[0])))
+        not <| Seq.forall Char.IsLetterOrDigitOrUnderscore text || 
+        not <| String.startsWithLetter text)
         |> not
     let n1,n2, _,_ = getMemorySetup dialog 1
 

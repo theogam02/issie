@@ -48,7 +48,7 @@ let displayValuesOnWave wsModel (waveValues: FData array) (transitions: NonBinar
         let cycleWidth = singleWaveWidth wsModel
         let availableWidth = (float gap.Length * cycleWidth) - 2. * Constants.nonBinaryTransLen
         /// Required width to display one value
-        let requiredWidth = 1.1 * DrawHelpers.getTextWidthInPixels (waveValue, Constants.valueOnWaveText)
+        let requiredWidth = 1.1 * DrawHelpers.getTextWidthInPixels Constants.valueOnWaveText waveValue
         /// Width of text plus whitespace between a repeat
         let widthWithPadding = 2. * requiredWidth + Constants.valueOnWavePadding
 
@@ -65,7 +65,6 @@ let displayValuesOnWave wsModel (waveValues: FData array) (transitions: NonBinar
                 |> max 1
 
             let repeatSpace = (availableWidth - float repeats * requiredWidth) / ((float repeats + 1.) * cycleWidth)
-
             let valueText i =
                 text (valueOnWaveProps wsModel i (float gap.Start + repeatSpace) widthWithPadding)
                     [ str waveValue ]
@@ -446,21 +445,25 @@ let namesColumn model wsModel dispatch : ReactElement =
 /// and waveRows, as the order of the waves matters here. This is
 /// because the wave viewer is comprised of three columns of many
 /// rows, rather than many rows of three columns.
+/// Return required width of values column in pixels, and list of cloumn react elements.
 let valueRows (wsModel: WaveSimModel) =
+    let valueColWidth, valueColNumChars =
+        valuesColumnSize wsModel
     selectedWaves wsModel
     |> List.map (fun wave -> getWaveValue wsModel.CurrClkCycle wave wave.Width)
     |> List.map (fun fd ->
         match fd.Width, fd.Dat with
         | 1, Word b -> $" {b}" 
-        | _ -> fastDataToPaddedString WaveSimHelpers.Constants.valueColumnMaxChars wsModel.Radix fd)
+        | _ -> fastDataToPaddedString valueColNumChars wsModel.Radix fd)
     |> List.map (fun value -> label [ valueLabelStyle ] [ str value ])
+    |> (fun rows -> valueColWidth, rows)
 
 /// Create column of waveform values
 let private valuesColumn wsModel : ReactElement =
     let start = TimeHelpers.getTimeMs ()
-    let rows = valueRows wsModel
+    let width, rows = valueRows wsModel
 
-    div [ valuesColumnStyle ]
+    div [ valuesColumnStyle width]
         (List.concat [ topRow; rows ])
     |> TimeHelpers.instrumentInterval "valuesColumn" start
 
@@ -484,14 +487,17 @@ let waveformColumn (wsModel: WaveSimModel) dispatch : ReactElement =
     /// and valueRows, as the order of the waves matters here. This is
     /// because the wave viewer is comprised of three columns of many
     /// rows, rather than many rows of three columns.
+    let waves = selectedWaves wsModel
+    if List.exists (fun wave -> wave.SVG = None) waves then
+        dispatch <| GenerateCurrentWaveforms
     let waveRows : ReactElement list =
-        selectedWaves wsModel
+        waves
         |> List.map (fun wave ->
             match wave.SVG with
             | Some waveform ->
                 waveform
             | None ->
-                div [] []
+                div [] [] // the GenerateCurrentWaveforms message will soon update this
         )
 
     div [ waveformColumnStyle ]
@@ -931,15 +937,15 @@ let topHalf canvasState (model: Model) dispatch : ReactElement =
                 div [] 
                     (if model.WaveSimSheet <> None then 
                         [
-                            str "View clocked logic waveforms by selecting waves. "
-                            str "Select RAMs or ROMs to view contents during the simulation. "
+                            str "Use 'Select Waves' to select and add clocked logic waveforms. "
+                            str "Use 'Select RAM' to view RAM or ROM contents during the simulation. "
                             str "View or change any sheet with the simulation running. "
                             str "After design changes use "
-                            refreshSvg "black" "12px"
+                            refreshSvg "green" "12px"
                             str " to update waveforms."
                         ] else
                         [
-                            str "Use 'Start Simulation' button to simulate current sheet."
+                            str "Use 'Start Simulation' button to simulate the current sheet. "
                             str "Drag the grey divider to change the Viewer width."
                         ])
                 ]
